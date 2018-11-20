@@ -88,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("-rn", "--run_name", default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)
     parser.add_argument("-pct", "--profile_compute_time_every_n_steps", default=None, type=int)
-    parser.add_argument("-ssi", "--save_summary_info_every_n_steps", default=100, type=int)
+    parser.add_argument("-ssi", "--save_summary_info_every_n_steps", default=None, type=int)
     parser.add_argument("-lai", "--log_annotated_images", default=False, type=bool)
     args = parser.parse_args()
     print(args)
