@@ -24,4 +24,4 @@ with tf.Session(config=tf.ConfigProto(
 
     var_count = np.array([(var == var).sum() for var in variables]).sum()
 
-    print(var_count)
+    print("Total Variables: {:,}".format(var_count))
