@@ -18,9 +18,10 @@ with tf.Session(config=tf.ConfigProto(
 
     tf.global_variables_initializer().run()
 
-    _, _, _, vars = sess.run([logits, preds, loss, tf.trainable_variables()],
+    _, _, _, variables = sess.run(
+        [logits, preds, loss, tf.trainable_variables()],
         feed_dict={keep_prob: 0.5, is_training: True})
 
-    var_count = np.array([(var==var).sum() for var in vars]).sum()
+    var_count = np.array([(var == var).sum() for var in variables]).sum()
 
-    print( var_count )
+    print(var_count)
