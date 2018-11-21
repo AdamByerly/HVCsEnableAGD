@@ -3,8 +3,8 @@ import tensorflow as tf
 from datetime import datetime
 from output import Output
 from input_sieve import DataSet, train_inputs, eval_inputs
-from model import run_towers, apply_gradients
-from model import compute_total_loss, evaluate_validation
+from model2 import run_towers, apply_gradients
+from model2 import compute_total_loss, evaluate_validation
 
 # TODO: figure out running out of memory after 700 steps
 #       when logging summary info for either gradients
