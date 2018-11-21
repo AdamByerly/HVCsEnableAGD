@@ -7,8 +7,7 @@ x = make_tower("tower1",
     tf.zeros([1, 1000]),           # classes
     0.5, True, 1000)
 
-with tf.Session(config=tf.ConfigProto(
-        allow_soft_placement=True, log_device_placement=True)) as sess:
+with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
     tf.global_variables_initializer().run()
 
