@@ -80,7 +80,8 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     return logits, preds, loss
 
 
-def run_towers(keep_prob, is_training, training_data, validation_data, count_classes):
+def run_towers(keep_prob, is_training,
+        training_data, validation_data, count_classes):
     with tf.device("/device:CPU:0"), tf.name_scope("input/train_or_eval"):
         images, labels = \
             tf.cond(is_training, lambda: training_data, lambda: validation_data)
@@ -92,7 +93,8 @@ def run_towers(keep_prob, is_training, training_data, validation_data, count_cla
     with tf.device("/device:GPU:1"):
         logits2, preds2, loss2 = make_tower("tower2",
             images_2, labels_2, keep_prob, is_training, count_classes)
-    with tf.device("/device:GPU:1"), tf.name_scope("metrics/concat_tower_outputs"):
+    with tf.device("/device:GPU:1"),\
+         tf.name_scope("metrics/concat_tower_outputs"):
         logits = tf.concat([logits1, logits2], 0)
         # preds  = tf.concat([preds1, preds2], 0)
         # tf.summary.histogram('predictions/activations', preds)

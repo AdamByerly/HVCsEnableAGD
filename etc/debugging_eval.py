@@ -1,9 +1,9 @@
 import os
 import tensorflow as tf
 from output import Output
-from input_sieve import DataSet, eval_inputs
-from model import run_towers
-from model import compute_total_loss, evaluate_validation
+from imagenet.input_sieve import DataSet, eval_inputs
+from simple.model import run_towers
+from simple.model import compute_total_loss, evaluate_validation
 
 
 def go(run_name, weights_file, log_annotated_images):
@@ -12,8 +12,9 @@ def go(run_name, weights_file, log_annotated_images):
     out = Output(run_name)
 
     out.log_msg("Setting up data feeds...")
-    validation_dataset = DataSet('validation')
-    validation_data = eval_inputs(validation_dataset, log_annotated_images)
+    validation_dataset = DataSet('validation', 128)
+    validation_data = eval_inputs(validation_dataset,
+                        128, 224, 224, log_annotated_images)
     validation_steps = validation_dataset.num_batches_per_epoch()
 
     with tf.device("/device:CPU:0"):

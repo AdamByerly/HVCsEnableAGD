@@ -34,7 +34,7 @@ matrix2 = tf.constant(b, shape=[1, 3, 2, 4])
 # tile the weight matrix for each item in the batch
 matrix2 = tf.tile(matrix2, [2, 1, 1, 1])
 
-# multiply primary capsules by the weight matrix
+# multiply (element-wise) primary capsules by the weight matrix
 product = tf.multiply(matrix1, matrix2)
 
 # sum the result and shape into 4D capsules

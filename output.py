@@ -76,7 +76,8 @@ class Output:
     def train_step_begin(self, step):
         if self.profile_compute_time_every_n_steps is not None and step % \
                 self.profile_compute_time_every_n_steps == 0:
-            self.run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+            self.run_options = tf.RunOptions(
+                trace_level=tf.RunOptions.FULL_TRACE)
             self.run_metadata = tf.RunMetadata()
 
     def train_step_end(self, session, global_step,

@@ -1,11 +1,11 @@
 import numpy as np
 import tensorflow as tf
-from model2 import make_tower
+from MNIST.model import make_tower
 
 x = make_tower("tower1",
-    tf.zeros([1, 224, 224, 3]),    # input image size (and color channels)
-    tf.zeros([1, 1000]),           # classes
-    0.5, True, 1000)
+    tf.zeros([64, 28, 28, 1]),    # input image size (and color channels)
+    tf.zeros([64, 10]),           # classes
+    True)
 
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
