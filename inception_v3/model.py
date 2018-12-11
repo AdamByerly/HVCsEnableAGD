@@ -6,7 +6,7 @@ from cnn_helpers import make_conv_3x3_no_bias, make_conv_3x3_stride_2_no_bias
 from cnn_helpers import make_conv_3x1_no_bias, make_conv_1x3_no_bias
 from cnn_helpers import make_conv_5x5_no_bias
 from cnn_helpers import make_conv_1x7_no_bias, make_conv_7x1_no_bias
-from cnn_helpers import make_avg_pool, make_avg_pool_3x3
+from cnn_helpers import make_avg_pool, make_avg_pool_3x3_stride_1
 from cnn_helpers import make_max_pool_3x3, make_avg_pool_5x5_stride_3
 from inception_v3.lsr_loss import lsr_loss
 
@@ -69,7 +69,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu11 = make_relu("relu11", scope, bn11)
 
     # branch_pool
-    pool12 = make_avg_pool_3x3("pool12", scope, intnsr, padding="SAME")
+    pool12 = make_avg_pool_3x3_stride_1("pool12", scope, intnsr, padding="SAME")
     conv12 = make_conv_1x1_no_bias("conv12", scope, pool12, 32, padding="SAME")
     bn12   = make_batch_norm("bn12", scope, conv12, is_training)
     relu12 = make_relu("relu12", scope, bn12)
@@ -106,7 +106,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu18 = make_relu("relu18", scope, bn18)
 
     # branch_pool
-    pool19 = make_avg_pool_3x3("pool19", scope, intnsr, padding="SAME")
+    pool19 = make_avg_pool_3x3_stride_1("pool19", scope, intnsr, padding="SAME")
     conv19 = make_conv_1x1_no_bias("conv19", scope, pool19, 64, padding="SAME")
     bn19   = make_batch_norm("bn19", scope, conv19, is_training)
     relu19 = make_relu("relu19", scope, bn19)
@@ -143,7 +143,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu25 = make_relu("relu25", scope, bn25)
 
     # branch_pool
-    pool26 = make_avg_pool_3x3("pool26", scope, intnsr, padding="SAME")
+    pool26 = make_avg_pool_3x3_stride_1("pool26", scope, intnsr, padding="SAME")
     conv26 = make_conv_1x1_no_bias("conv26", scope, pool26, 64, padding="SAME")
     bn26   = make_batch_norm("bn26", scope, conv26, is_training)
     relu26 = make_relu("relu26", scope, bn26)
@@ -214,7 +214,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu40 = make_relu("relu40", scope, bn40)
 
     # branch_pool
-    pool41 = make_avg_pool_3x3("pool41", scope, intnsr, padding="SAME")
+    pool41 = make_avg_pool_3x3_stride_1("pool41", scope, intnsr, padding="SAME")
     conv41 = make_conv_1x1_no_bias("conv41", scope, pool41, 192, padding="SAME")
     bn41   = make_batch_norm("bn41", scope, conv41, is_training)
     relu41 = make_relu("relu41", scope, bn41)
@@ -260,7 +260,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu50 = make_relu("relu50", scope, bn50)
 
     # branch_pool
-    pool51 = make_avg_pool_3x3("pool51", scope, intnsr, padding="SAME")
+    pool51 = make_avg_pool_3x3_stride_1("pool51", scope, intnsr, padding="SAME")
     conv51 = make_conv_1x1_no_bias("conv51", scope, pool51, 192, padding="SAME")
     bn51   = make_batch_norm("bn51", scope, conv51, is_training)
     relu51 = make_relu("relu51", scope, bn51)
@@ -306,7 +306,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu60 = make_relu("relu60", scope, bn60)
 
     # branch_pool
-    pool61 = make_avg_pool_3x3("pool61", scope, intnsr, padding="SAME")
+    pool61 = make_avg_pool_3x3_stride_1("pool61", scope, intnsr, padding="SAME")
     conv61 = make_conv_1x1_no_bias("conv61", scope, pool61, 192, padding="SAME")
     bn61   = make_batch_norm("bn61", scope, conv61, is_training)
     relu61 = make_relu("relu61", scope, bn61)
@@ -352,7 +352,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu70 = make_relu("relu70", scope, bn70)
 
     # branch_pool
-    pool71 = make_avg_pool_3x3("pool71", scope, intnsr, padding="SAME")
+    pool71 = make_avg_pool_3x3_stride_1("pool71", scope, intnsr, padding="SAME")
     conv71 = make_conv_1x1_no_bias("conv71", scope, pool71, 192, padding="SAME")
     bn71   = make_batch_norm("bn71", scope, conv71, is_training)
     relu71 = make_relu("relu71", scope, bn71)
@@ -371,7 +371,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu72 = make_relu("relu72", scope, bn72)
 
     shape  = relu72.get_shape()
-    conv73 = make_conv_no_bias("conv73", scope, relu72, shape[1], shape[3], 128)
+    conv73 = make_conv_no_bias("conv73", scope, relu72, shape[1], shape[2], 128)
     bn73   = make_batch_norm("bn73", scope, conv73, is_training)
     relu73 = make_relu("relu73", scope, bn73)
 
@@ -448,7 +448,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     cc11   = tf.concat(axis=3, values=[relu87, relu88])
 
     # branch_pool
-    pool89 = make_avg_pool_3x3("pool89", scope, intnsr, padding="SAME")
+    pool89 = make_avg_pool_3x3_stride_1("pool89", scope, intnsr, padding="SAME")
     conv89 = make_conv_1x1_no_bias("conv89", scope, pool89, 192, padding="SAME")
     bn89   = make_batch_norm("bn89", scope, conv89, is_training)
     relu89 = make_relu("relu89", scope, bn89)
@@ -493,7 +493,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     cc14   = tf.concat(axis=3, values=[relu96, relu97])
 
     # branch_pool
-    pool98 = make_avg_pool_3x3("pool98", scope, intnsr, padding="SAME")
+    pool98 = make_avg_pool_3x3_stride_1("pool98", scope, intnsr, padding="SAME")
     conv98 = make_conv_1x1_no_bias("conv98", scope, pool98, 192, padding="SAME")
     bn98   = make_batch_norm("bn98", scope, conv98, is_training)
     relu98 = make_relu("relu98", scope, bn98)
@@ -506,7 +506,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     ############################################################################
 
     shape  = intnsr.get_shape()
-    pool99 = make_avg_pool("pool99", scope, intnsr, shape[1], shape[3])
+    pool99 = make_avg_pool("pool99", scope, intnsr, shape[1], shape[2])
     do99   = make_dropout("do99", scope, pool99, keep_prob)
 
     flat   = make_flatten("flatten", scope, do99)

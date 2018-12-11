@@ -149,10 +149,10 @@ def make_max_pool_3x3(op_name, op_scope, in_tensor, padding="VALID"):
             strides=[2, 2], pooling_type="MAX", padding=padding, name=op_name)
 
 
-def make_avg_pool_3x3(op_name, op_scope, in_tensor, padding="VALID"):
+def make_avg_pool_3x3_stride_1(op_name, op_scope, in_tensor, padding="VALID"):
     with tf.name_scope(op_scope):
         return tf.nn.pool(input=in_tensor, window_shape=[3, 3],
-            strides=[2, 2], pooling_type="AVG", padding=padding, name=op_name)
+            strides=[1, 1], pooling_type="AVG", padding=padding, name=op_name)
 
 
 def make_avg_pool_5x5_stride_3(op_name, op_scope, in_tensor, padding="VALID"):

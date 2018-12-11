@@ -48,7 +48,7 @@ def lsr_loss(logits, one_hot_labels,
             one_hot_labels = one_hot_labels*smooth_positives+smooth_negatives
 
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
-            lables=one_hot_labels, logits=logits, name="xentropy")
+            labels=one_hot_labels, logits=logits, name="xentropy")
 
         weight = tf.convert_to_tensor(
             weight, dtype=logits.dtype.base_dtype, name="loss_weight")

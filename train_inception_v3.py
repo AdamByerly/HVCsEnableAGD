@@ -82,7 +82,7 @@ def go(start_epoch, end_epoch, run_name, weights_file,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="inception_v3")
     parser.add_argument("-se", "--start_epoch", default=1, type=int)
-    parser.add_argument("-ee", "--end_epoch", default=50, type=int)
+    parser.add_argument("-ee", "--end_epoch", default=100, type=int)
     parser.add_argument("-rn", "--run_name",
         default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)
