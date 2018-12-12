@@ -1,7 +1,7 @@
 import tensorflow as tf
 from cnn_helpers import average_gradients, make_conv_3x3_no_bias
 from cnn_helpers import make_batch_norm, make_relu, make_fc_no_bias
-from cnn_helpers import make_caps_from_conv, make_homogeneous_vector_caps
+# from cnn_helpers import make_caps_from_conv, make_homogeneous_vector_caps
 from cnn_helpers import make_conv_3x3_stride_2_no_bias, make_fc, make_flatten
 
 BATCH_SIZE                     = 128
@@ -22,7 +22,7 @@ def mask_label(tower_name, tensor, mask):
 
 def make_tower(tower_name, x_in, y_out, is_training):
     cs      = tower_name+"/convs"  # convs scope
-    cs2     = tower_name+"/caps"   # caps scope
+    # cs2     = tower_name+"/caps"   # caps scope
     fcs     = tower_name+"/fcs"    # fully connecteds scope
 
     conv1   = make_conv_3x3_stride_2_no_bias("conv1", cs, x_in, 128)

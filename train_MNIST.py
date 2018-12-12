@@ -101,7 +101,7 @@ def go(start_epoch, end_epoch, run_name, weights_file,
             all_indices = np.arange(train_x.shape[0])
             index_perms = np.random.permutation(all_indices.shape[0])
             train_x     = train_x[index_perms]
-            #train_x     = shift_2(np.copy(train_x))
+            # train_x     = shift_2(np.copy(train_x))
             train_y     = train_y[index_perms]
 
             sess.run(iterator.initializer,

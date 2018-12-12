@@ -4,7 +4,7 @@ from cnn_helpers import average_gradients, make_max_pool_2x2
 from cnn_helpers import make_conv_3x3_no_bias, make_conv_3x3_stride_2_no_bias
 
 
-def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
+def make_tower(tower_name, x_in, y_out, is_training, count_classes):
     cs     = tower_name+"/convs"  # convs scope
 
     conv1  = make_conv_3x3_stride_2_no_bias("conv1", cs, x_in, 32)
@@ -56,7 +56,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
 
     with tf.device("/device:CPU:0"),\
             tf.variable_scope("vars/convs", reuse=tf.AUTO_REUSE):
-        w_out_cap = tf.get_variable("W_pcap", shape=[1, 1000, 512, 8],
+        w_out_cap = tf.get_variable("W_pcap", shape=[1, count_classes, 512, 8],
                         initializer=tf.glorot_uniform_initializer())
 
     # TODO: put this in a namespace
@@ -80,8 +80,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     return logits, preds, loss
 
 
-def run_towers(keep_prob, is_training,
-        training_data, validation_data, count_classes):
+def run_towers(is_training, training_data, validation_data, count_classes):
     with tf.device("/device:CPU:0"), tf.name_scope("input/train_or_eval"):
         images, labels = \
             tf.cond(is_training, lambda: training_data, lambda: validation_data)
@@ -89,10 +88,10 @@ def run_towers(keep_prob, is_training,
         labels_1, labels_2 = tf.split(labels, num_or_size_splits=2)
     with tf.device("/device:GPU:0"):
         logits1, preds1, loss1 = make_tower("tower1",
-            images_1, labels_1, keep_prob, is_training, count_classes)
+            images_1, labels_1, is_training, count_classes)
     with tf.device("/device:GPU:1"):
         logits2, preds2, loss2 = make_tower("tower2",
-            images_2, labels_2, keep_prob, is_training, count_classes)
+            images_2, labels_2, is_training, count_classes)
     with tf.device("/device:GPU:1"),\
          tf.name_scope("metrics/concat_tower_outputs"):
         logits = tf.concat([logits1, logits2], 0)

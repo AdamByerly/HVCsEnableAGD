@@ -258,10 +258,14 @@ def distort_image(image, log_annotated_images,
 
 def parse_example_proto(example_serialized):
     feature_map = {
-        'image/encoded'     : tf.FixedLenFeature([], dtype=tf.string, default_value=''),
-        'image/class/label' : tf.FixedLenFeature([1], dtype=tf.int64, default_value=-1),
-        'image/class/text'  : tf.FixedLenFeature([], dtype=tf.string, default_value=''),
-        'image/class/synset': tf.FixedLenFeature([], dtype=tf.string, default_value='')}
+        'image/encoded'     : tf.FixedLenFeature([],
+                                dtype=tf.string, default_value=''),
+        'image/class/label' : tf.FixedLenFeature([1],
+                                dtype=tf.int64, default_value=-1),
+        'image/class/text'  : tf.FixedLenFeature([],
+                                dtype=tf.string, default_value=''),
+        'image/class/synset': tf.FixedLenFeature([],
+                                dtype=tf.string, default_value='')}
     sparse_float32 = tf.VarLenFeature(dtype=tf.float32)
     feature_map.update({k: sparse_float32 for k in [
         'image/object/bbox/xmin', 'image/object/bbox/ymin',

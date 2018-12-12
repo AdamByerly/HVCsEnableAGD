@@ -1,6 +1,6 @@
 import os
 import tensorflow as tf
-from output import Output
+from imagenet.output import Output
 from imagenet.input_sieve import DataSet, eval_inputs
 from simple.model import run_towers
 from simple.model import compute_total_loss, evaluate_validation
@@ -32,7 +32,8 @@ def go(run_name, weights_file, log_annotated_images):
             allow_soft_placement=True, log_device_placement=True)) as sess:
         out.set_session_graph(sess.graph)
 
-        tb_writer = tf.summary.FileWriter(os.path.join("logs", run_name), sess.graph)
+        tb_writer = tf.summary.FileWriter(
+            os.path.join("logs", run_name), sess.graph)
 
         if weights_file is not None:
             out.log_msg("Restoring weights file: {}".format(weights_file))

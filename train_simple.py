@@ -1,14 +1,18 @@
 import argparse
 import tensorflow as tf
 from datetime import datetime
-from output import Output
+from imagenet.output import Output
 from imagenet.input_sieve import DataSet, train_inputs, eval_inputs
-from simple.model2 import run_towers, apply_gradients
-from simple.model2 import compute_total_loss, evaluate_validation
+from simple.model import run_towers, apply_gradients
+from simple.model import compute_total_loss, evaluate_validation
 
 # TODO: figure out running out of memory after 700 steps
 #       when logging summary info for either gradients
 #       or predictions/logits (or both)
+
+BATCH_SIZE   = 128
+IMAGE_HEIGHT = 224
+IMAGE_WIDTH  = 224
 
 
 def go(start_epoch, end_epoch, run_name, weights_file,
@@ -20,12 +24,12 @@ def go(start_epoch, end_epoch, run_name, weights_file,
                  save_summary_info_every_n_steps)
 
     out.log_msg("Setting up data feeds...")
-    training_dataset   = DataSet('train', 128)
-    validation_dataset = DataSet('validation', 128)
-    training_data      = train_inputs(training_dataset,
-                            128, 224, 224, log_annotated_images)
-    validation_data    = eval_inputs(validation_dataset,
-                            128, 224, 224, log_annotated_images)
+    training_dataset   = DataSet('train', BATCH_SIZE)
+    validation_dataset = DataSet('validation', BATCH_SIZE)
+    training_data      = train_inputs(training_dataset, BATCH_SIZE,
+                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
+    validation_data    = eval_inputs(validation_dataset, BATCH_SIZE,
+                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
     training_steps     = training_dataset.num_batches_per_epoch()
     validation_steps   = validation_dataset.num_batches_per_epoch()
 
