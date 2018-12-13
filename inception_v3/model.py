@@ -1,5 +1,5 @@
 import tensorflow as tf
-from cnn_helpers import average_gradients, make_fc, make_dropout
+from cnn_helpers import average_gradients, make_fc, make_dropout, make_concat
 from cnn_helpers import make_batch_norm, make_relu, make_flatten
 from cnn_helpers import make_conv_no_bias, make_conv_1x1_no_bias
 from cnn_helpers import make_conv_3x3_no_bias, make_conv_3x3_stride_2_no_bias
@@ -74,7 +74,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn12   = make_batch_norm("bn12", scope, conv12, is_training)
     relu12 = make_relu("relu12", scope, bn12)
 
-    cc1    = tf.concat(axis=3, values=[relu6, relu8, relu11, relu12])
+    cc1    = make_concat("cc1", scope, 3, [relu6, relu8, relu11, relu12])
 
     ############################################################################
     intnsr = cc1
@@ -111,7 +111,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn19   = make_batch_norm("bn19", scope, conv19, is_training)
     relu19 = make_relu("relu19", scope, bn19)
 
-    cc2    = tf.concat(axis=3, values=[relu13, relu15, relu18, relu19])
+    cc2    = make_concat("cc2", scope, 3, [relu13, relu15, relu18, relu19])
 
     ############################################################################
     intnsr = cc2
@@ -148,7 +148,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn26   = make_batch_norm("bn26", scope, conv26, is_training)
     relu26 = make_relu("relu26", scope, bn26)
 
-    cc3    = tf.concat(axis=3, values=[relu20, relu22, relu25, relu26])
+    cc3    = make_concat("cc3", scope, 3, [relu20, relu22, relu25, relu26])
 
     ############################################################################
     intnsr = cc3
@@ -173,7 +173,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
 
     pool31 = make_max_pool_3x3("pool31", scope, intnsr)
 
-    cc4    = tf.concat(axis=3, values=[relu27, relu30, pool31])
+    cc4    = make_concat("cc4", scope, 3, [relu27, relu30, pool31])
 
     ############################################################################
     intnsr = cc4
@@ -219,7 +219,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn41   = make_batch_norm("bn41", scope, conv41, is_training)
     relu41 = make_relu("relu41", scope, bn41)
 
-    cc5    = tf.concat(axis=3, values=[relu32, relu35, relu40, relu41])
+    cc5    = make_concat("cc5", scope, 3, [relu32, relu35, relu40, relu41])
 
     ############################################################################
     intnsr = cc5
@@ -265,7 +265,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn51   = make_batch_norm("bn51", scope, conv51, is_training)
     relu51 = make_relu("relu51", scope, bn51)
 
-    cc6    = tf.concat(axis=3, values=[relu42, relu45, relu50, relu51])
+    cc6    = make_concat("cc6", scope, 3, [relu42, relu45, relu50, relu51])
 
     ############################################################################
     intnsr = cc6
@@ -311,7 +311,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn61   = make_batch_norm("bn61", scope, conv61, is_training)
     relu61 = make_relu("relu61", scope, bn61)
 
-    cc7    = tf.concat(axis=3, values=[relu52, relu55, relu60, relu61])
+    cc7    = make_concat("cc7", scope, 3, [relu52, relu55, relu60, relu61])
 
     ############################################################################
     intnsr = cc7
@@ -357,7 +357,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn71   = make_batch_norm("bn71", scope, conv71, is_training)
     relu71 = make_relu("relu71", scope, bn71)
 
-    cc8    = tf.concat(axis=3, values=[relu62, relu65, relu70, relu71])
+    cc8    = make_concat("cc8", scope, 3, [relu62, relu65, relu70, relu71])
 
     ############################################################################
     intnsr = cc8
@@ -408,7 +408,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     # branch_pool
     pool80 = make_max_pool_3x3("pool80", scope, intnsr)
 
-    cc9    = tf.concat(axis=3, values=[relu75, relu79, pool80])
+    cc9    = make_concat("cc9", scope, 3, [relu75, relu79, pool80])
 
     ############################################################################
     intnsr = cc9
@@ -430,7 +430,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     conv84 = make_conv_3x1_no_bias("conv84", scope, relu82, 384, padding="SAME")
     bn84   = make_batch_norm("bn84", scope, conv84, is_training)
     relu84 = make_relu("relu84", scope, bn84)
-    cc10   = tf.concat(axis=3, values=[relu83, relu84])
+    cc10   = make_concat("cc10", scope, 3, [relu83, relu84])
 
     # branch3x3dbl
     conv85 = make_conv_1x1_no_bias("conv85", scope, intnsr, 448, padding="SAME")
@@ -445,7 +445,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     conv88 = make_conv_3x1_no_bias("conv88", scope, relu86, 384, padding="SAME")
     bn88   = make_batch_norm("bn88", scope, conv88, is_training)
     relu88 = make_relu("relu88", scope, bn88)
-    cc11   = tf.concat(axis=3, values=[relu87, relu88])
+    cc11   = make_concat("cc11", scope, 3, [relu87, relu88])
 
     # branch_pool
     pool89 = make_avg_pool_3x3_stride_1("pool89", scope, intnsr, padding="SAME")
@@ -453,7 +453,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn89   = make_batch_norm("bn89", scope, conv89, is_training)
     relu89 = make_relu("relu89", scope, bn89)
 
-    cc12   = tf.concat(axis=3, values=[relu81, cc10, cc11, relu89])
+    cc12   = make_concat("cc12", scope, 3, [relu81, cc10, cc11, relu89])
 
     ############################################################################
     intnsr = cc12
@@ -475,7 +475,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     conv93 = make_conv_3x1_no_bias("conv93", scope, relu91, 384, padding="SAME")
     bn93   = make_batch_norm("bn93", scope, conv93, is_training)
     relu93 = make_relu("relu93", scope, bn93)
-    cc13   = tf.concat(axis=3, values=[relu92, relu93])
+    cc13   = make_concat("cc13", scope, 3, [relu92, relu93])
 
     # branch3x3dbl
     conv94 = make_conv_1x1_no_bias("conv94", scope, intnsr, 448, padding="SAME")
@@ -490,7 +490,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     conv97 = make_conv_3x1_no_bias("conv97", scope, relu95, 384, padding="SAME")
     bn97   = make_batch_norm("bn97", scope, conv97, is_training)
     relu97 = make_relu("relu97", scope, bn97)
-    cc14   = tf.concat(axis=3, values=[relu96, relu97])
+    cc14   = make_concat("cc14", scope, 3, [relu96, relu97])
 
     # branch_pool
     pool98 = make_avg_pool_3x3_stride_1("pool98", scope, intnsr, padding="SAME")
@@ -498,7 +498,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     bn98   = make_batch_norm("bn98", scope, conv98, is_training)
     relu98 = make_relu("relu98", scope, bn98)
 
-    cc15   = tf.concat(axis=3, values=[relu90, cc13, cc14, relu98])
+    cc15   = make_concat("cc15", scope, 3, [relu90, cc13, cc14, relu98])
 
     ############################################################################
     intnsr = cc15

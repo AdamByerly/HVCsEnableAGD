@@ -35,7 +35,10 @@ def go(start_epoch, end_epoch, run_name, weights_file,
             keep_prob   = tf.placeholder(tf.float32)
             is_training = tf.placeholder(tf.bool)
 
-    opt = tf.train.AdamOptimizer()
+    decay_steps = int(training_dataset.num_batches_per_epoch() * 30.0)
+    lr = tf.train.exponential_decay(0.1, global_step, decay_steps,
+                                    0.16, staircase=True)
+    opt = tf.train.RMSPropOptimizer(lr, decay=0.9, momentum=0.9, epsilon=1.0)
 
     loss1, loss2, logits, labels = run_towers(keep_prob,
         is_training, training_data, validation_data, DataSet.num_classes())

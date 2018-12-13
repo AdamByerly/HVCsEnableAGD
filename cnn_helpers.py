@@ -16,6 +16,11 @@ def make_batch_norm(op_name, op_scope, in_tensor, is_train):
             training=is_train)
 
 
+def make_concat(op_name, op_scope, axis, in_tensors):
+    with tf.name_scope(op_scope):
+        return tf.concat(axis=axis, values=in_tensors, name=op_name)
+
+
 def make_conv_no_bias(op_name, op_scope, in_tensor, filter_size_h,
         filter_size_w, filters, strides=(1, 1, 1, 1), padding="VALID"):
     input_size = in_tensor.get_shape().as_list()[3]
