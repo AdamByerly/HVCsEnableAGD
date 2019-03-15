@@ -7,14 +7,15 @@ from cnn_helpers import make_conv_1x7_no_bias, make_conv_7x1_no_bias
 from cnn_helpers import make_avg_pool, make_avg_pool_3x3_stride_1
 from cnn_helpers import make_max_pool_3x3, make_avg_pool_5x5_stride_3
 from cnn_helpers import average_gradients, make_relu, make_concat
-from cnn_helpers import make_flatten, make_fc, make_dropout
+from cnn_helpers import make_caps_from_conv, make_homogeneous_vector_caps
+from cnn_helpers import make_norm
 from inception_v3.lsr_loss import lsr_loss
 from inception_v3.batch_norm import batch_norm
 
 DECAY_RATE = 0.00004
 
 
-def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
+def make_tower(tower_name, x_in, y_out, is_training, count_classes):
     ############################################################################
     intnsr = x_in
     scope  = tower_name+"/input_stem"
@@ -445,16 +446,18 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu72 = make_relu("relu72", scope, bn72)
 
     shape  = relu72.get_shape()
-    conv73 = make_conv_no_bias("conv73",
-                scope, relu72, shape[1], shape[2], 128,
-                weight_decay=DECAY_RATE, stddev=0.01)
+    conv73 = make_conv_no_bias("conv73", scope, relu72, shape[1], shape[2], 128)
     bn73   = batch_norm(scope+"/bn73", conv73, is_training)
     relu73 = make_relu("relu73", scope, bn73)
 
-    aux_flat   = make_flatten("aux_flatten", scope, relu73)
-    aux_logits = make_fc("aux_fc",
-                    scope, aux_flat, count_classes,
-                    weight_decay=DECAY_RATE, stddev=0.001,)
+    pcap73 = make_caps_from_conv("pcap72", scope,
+                relu73, 8, 16, shape[0])
+    ocap73 = make_homogeneous_vector_caps("outcaps73", scope,
+                pcap73, count_classes, 8, shape[0], weight_decay=DECAY_RATE)
+    bn73b  = batch_norm(scope+"/bn73b", ocap73, is_training)
+    relu73b = make_relu("relu73b", scope, bn73b)
+
+    aux_logits = make_norm("norm73", scope, relu73b)
 
     ############################################################################
     intnsr = cc8
@@ -609,10 +612,15 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
 
     shape  = intnsr.get_shape()
     pool99 = make_avg_pool("pool99", scope, intnsr, shape[1], shape[2])
-    do99   = make_dropout("do99", scope, pool99, keep_prob)
 
-    flat   = make_flatten("flatten", scope, do99)
-    logits = make_fc("fc", scope, flat, count_classes, weight_decay=DECAY_RATE)
+    pcap99 = make_caps_from_conv("pcap99", scope,
+                pool99, 8, 256, shape[0])
+    ocap99 = make_homogeneous_vector_caps("outcaps99", scope,
+                pcap99, count_classes, 8, shape[0], weight_decay=DECAY_RATE)
+    bn99   = batch_norm(scope+"/bn99", ocap99, is_training)
+    relu99 = make_relu("relu99", scope, bn99)
+
+    logits = make_norm("norm99", scope, relu99)
 
     for var in tf.trainable_variables():
         tf.summary.histogram(var.op.name, var)
@@ -625,22 +633,18 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     return logits, preds, loss
 
 
-def run_towers(is_training, is_nbl,
-        training_data, validation_data, nbl_val_data, count_classes):
+def run_towers(is_training, training_data, validation_data, count_classes):
     with tf.device("/device:CPU:0"), tf.name_scope("input/train_or_eval"):
-        keep_prob = tf.cond(is_training,
-                        lambda: tf.constant(0.8), lambda: tf.constant(1.0))
         images, labels = \
-            tf.cond(is_training, lambda: training_data, lambda:
-            tf.cond(is_nbl, lambda: nbl_val_data, lambda: validation_data))
+            tf.cond(is_training, lambda: training_data, lambda: validation_data)
         images_1, images_2 = tf.split(images, num_or_size_splits=2)
         labels_1, labels_2 = tf.split(labels, num_or_size_splits=2)
     with tf.device("/device:GPU:0"):
         logits1, preds1, loss1 = make_tower("tower1",
-            images_1, labels_1, keep_prob, is_training, count_classes)
+            images_1, labels_1, is_training, count_classes)
     with tf.device("/device:GPU:1"):
         logits2, preds2, loss2 = make_tower("tower2",
-            images_2, labels_2, keep_prob, is_training, count_classes)
+            images_2, labels_2, is_training, count_classes)
     with tf.device("/device:GPU:1"),\
             tf.name_scope("metrics/concat_tower_outputs"):
         logits     = tf.concat([logits1, logits2], 0)

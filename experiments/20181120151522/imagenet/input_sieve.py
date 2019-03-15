@@ -1,10 +1,10 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
+# Copyright 2018 Adam Byerly. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,9 +14,10 @@
 # ==============================================================================
 #
 # The above copyright notice is applied in accordance with the license
-#  of the codebase from which the following was derived and retrieved from:
-#    https://github.com/tensorflow/models/blob/master
-#      /research/inception/inception/image_processing.py
+#  of the codebase from which the following was derived.
+# That code is Copyright 2016 Google, Inc. and was retrieved from:
+#  https://github.com/tensorflow/models/blob/master
+#  /research/inception/inception/image_processing.py
 
 import os
 import cv2
@@ -24,49 +25,35 @@ import math
 import numpy as np
 import tensorflow as tf
 
-BATCH_SIZE                = 96
-IMAGE_HEIGHT              = 299
-IMAGE_WIDTH               = 299
-PREPROCESS_THREADS        = 4
-READERS                   = 4
-INPUT_QUEUE_MEMORY_FACTOR = 32
+PREPROCESS_THREADS        = 24
+READERS                   = 16
+INPUT_QUEUE_MEMORY_FACTOR = 16
 EXAMPLES_PER_SHARD        = 1024
 CLASSES                   = 1000
-BACKGROUND_CLASSES        = 0
 TRAIN_IMAGE_COUNT         = 1281167
 VALIDATION_IMAGE_COUNT    = 50000
-BASE_DIR                  = "C:\\Users\\adam\\Downloads\\"
+BASE_DIR                  = "C:\\Users\\Adam\\Downloads\\"
 DATA_DIR                  = os.path.join(BASE_DIR,
                                 "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
-BLACKLIST_FILE            = os.path.join(BASE_DIR,
-                                "ILSVRC2017_CLS-LOC\\"
-                                "ILSVRC2015_clsloc_validation_blacklist.txt")
 
 
 class DataSet(object):
-    def __init__(self, subset):
+    def __init__(self, subset, batch_size):
         self.subset = subset
-        bl_file = open(BLACKLIST_FILE, "r")
-        self.bl_images = [int(line.strip()) for line in bl_file.readlines()]
-        self.bl_image_count = len(self.bl_images)
+        self.batch_size = batch_size
 
     @staticmethod
     def num_classes():
-        return CLASSES+BACKGROUND_CLASSES
-
-    def get_nbl_validation_image_list(self):
-        return self.bl_images
+        return CLASSES
 
     def num_examples_per_epoch(self):
         if self.subset == 'train':
             return TRAIN_IMAGE_COUNT
         if self.subset == 'validation':
             return VALIDATION_IMAGE_COUNT
-        if self.subset == 'non-blacklisted-validation':
-            return VALIDATION_IMAGE_COUNT-self.bl_image_count
 
     def num_batches_per_epoch(self):
-        return int(math.ceil(self.num_examples_per_epoch()/BATCH_SIZE))
+        return int(math.ceil(self.num_examples_per_epoch()/self.batch_size))
 
     def data_files(self):
         tf_record_pattern = os.path.join(DATA_DIR, '%s-*' % self.subset)
@@ -74,23 +61,20 @@ class DataSet(object):
         return data_files
 
 
-def train_inputs(dataset, log_annotated_images=False):
-    return batch_inputs(dataset,
-        log_annotated_images, True, READERS, False, "input/batch_train")
+def train_inputs(dataset, batch_size,
+        image_height, image_width, log_annotated_images=False):
+    return batch_inputs(dataset, batch_size, image_height, image_width,
+        log_annotated_images, True, READERS, "input/batch_train")
 
 
-def eval_inputs(dataset, log_annotated_images=False):
-    return batch_inputs(dataset,
-        log_annotated_images, False, 1, False, "input/batch_eval")
+def eval_inputs(dataset, batch_size,
+        image_height, image_width, log_annotated_images=False):
+    return batch_inputs(dataset, batch_size, image_height, image_width,
+        log_annotated_images, False, 1, "input/batch_eval")
 
 
-def non_blacklisted_eval_inputs(dataset, log_annotated_images=False):
-    return batch_inputs(dataset,
-        log_annotated_images, False, 1, True, "input/batch_nbl_eval")
-
-
-def batch_inputs(dataset, log_annotated_images,
-        train, num_readers, filter_blacklist, scope_name):
+def batch_inputs(dataset, batch_size, image_height, image_width,
+        log_annotated_images, train, num_readers, scope_name):
     with tf.device('/cpu:0'), tf.name_scope(scope_name):
         data_files = dataset.data_files()
 
@@ -104,11 +88,11 @@ def batch_inputs(dataset, log_annotated_images,
 
         if train:
             examples_queue = tf.RandomShuffleQueue(
-                capacity=min_queue_examples+3*BATCH_SIZE,
+                capacity=min_queue_examples+3*batch_size,
                 min_after_dequeue=min_queue_examples, dtypes=[tf.string])
         else:
             examples_queue = tf.FIFOQueue(
-                capacity=examples_per_shard+3*BATCH_SIZE, dtypes=[tf.string])
+                capacity=examples_per_shard+3*batch_size, dtypes=[tf.string])
 
         if num_readers > 1:
             enqueue_ops = []
@@ -126,26 +110,24 @@ def batch_inputs(dataset, log_annotated_images,
 
         images_and_labels = []
         for thread_id in range(num_preprocess_threads):
-            image_buffer, label_index, bbox, text, synset, filename =\
+            image_buffer, label_index, bbox, text, synset =\
                 parse_example_proto(example_serialized)
-            if not filter_blacklist or \
-                filename != ["ILSVRC2012_val_"+("00000000"+str(bli))[:8]+".JPG"
-                            for bli in dataset.get_nbl_validation_image_list()]:
-                image = image_preprocessing(image_buffer, IMAGE_HEIGHT,
-                    IMAGE_WIDTH, bbox, label_index, text, synset,
-                    log_annotated_images, train, thread_id)
-                images_and_labels.append([image, label_index, text, synset])
+            image = image_preprocessing(image_buffer, image_height,
+                image_width, bbox, label_index, text, synset,
+                log_annotated_images, train, thread_id)
+            images_and_labels.append([image, label_index, text, synset])
+
         images, labels, texts, synsets = tf.train.batch_join(
-            images_and_labels, batch_size=BATCH_SIZE,
-            capacity=2*num_preprocess_threads*BATCH_SIZE)
+            images_and_labels, batch_size=batch_size,
+            capacity=2*num_preprocess_threads*batch_size)
 
         images = tf.cast(images, tf.float32)
-        images = tf.reshape(images, shape=[BATCH_SIZE,
-            IMAGE_HEIGHT, IMAGE_WIDTH, 3])
+        images = tf.reshape(images, shape=[
+            batch_size, image_height, image_width, 3])
 
-        labels = tf.reshape(labels, [BATCH_SIZE])
+        labels = tf.reshape(labels, [batch_size])
 
-        return images, tf.one_hot(labels, dataset.num_classes())
+        return images, tf.one_hot(labels, CLASSES)
 
 
 def annotate_images(imgs, labels, texts, synsets):
@@ -283,8 +265,6 @@ def parse_example_proto(example_serialized):
         'image/class/text'  : tf.FixedLenFeature([],
                                 dtype=tf.string, default_value=''),
         'image/class/synset': tf.FixedLenFeature([],
-                                dtype=tf.string, default_value=''),
-        'image/filename'    : tf.FixedLenFeature([],
                                 dtype=tf.string, default_value='')}
     sparse_float32 = tf.VarLenFeature(dtype=tf.float32)
     feature_map.update({k: sparse_float32 for k in [
@@ -300,5 +280,4 @@ def parse_example_proto(example_serialized):
     bbox = tf.expand_dims(bbox, 0)
     bbox = tf.transpose(bbox, [0, 2, 1])
     return features['image/encoded'], label, bbox,\
-           features['image/class/text'], features['image/class/synset'], \
-           features['image/filename']
+           features['image/class/text'], features['image/class/synset']

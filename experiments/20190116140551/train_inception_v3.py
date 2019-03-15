@@ -99,19 +99,12 @@ def go(start_epoch, end_epoch, run_name, weights_file,
             validating_nbl_ph = tf.placeholder(tf.bool)
 
         global_step        = tf.train.get_or_create_global_step()
-        decay_steps        = int(training_dataset.num_batches_per_epoch()*2.0)
-        learning_rate_op   = tf.train.exponential_decay(
-                                0.045, global_step, decay_steps,
-                                0.94, staircase=True)
-        opt                = tf.train.RMSPropOptimizer(
-                                learning_rate_op, decay=0.9,
-                                momentum=0.9, epsilon=1.0)
-#        decay_steps        = int(training_dataset.num_batches_per_epoch()*30.0)
-#        learning_rate_op   = tf.train.exponential_decay(0.1,
-#                                        global_step, decay_steps,
-#                                        0.16, staircase=True)
-#        opt                 = tf.train.RMSPropOptimizer(learning_rate_op,
-#                                        decay=0.9, momentum=0.9, epsilon=1.0)
+        decay_steps        = int(training_dataset.num_batches_per_epoch() * 30.0)
+        learning_rate_op   = tf.train.exponential_decay(0.1,
+                                        global_step, decay_steps,
+                                        0.16, staircase=True)
+        opt                 = tf.train.RMSPropOptimizer(learning_rate_op,
+                                        decay=0.9, momentum=0.9, epsilon=1.0)
 
         loss1, loss2, \
             logits, labels = run_towers(is_training_ph,
@@ -175,6 +168,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    go(args.start_epoch, args.end_epoch, args.run_name, args.weights_file,
+    go(169, 250, "20190116140551",
+       "logs\\20190116140551\\weights-168-latest-2242128",
        args.profile_compute_time_every_n_steps,
        args.save_summary_info_every_n_steps, args.log_annotated_images)

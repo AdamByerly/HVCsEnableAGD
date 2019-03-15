@@ -106,12 +106,6 @@ def go(start_epoch, end_epoch, run_name, weights_file,
         opt                = tf.train.RMSPropOptimizer(
                                 learning_rate_op, decay=0.9,
                                 momentum=0.9, epsilon=1.0)
-#        decay_steps        = int(training_dataset.num_batches_per_epoch()*30.0)
-#        learning_rate_op   = tf.train.exponential_decay(0.1,
-#                                        global_step, decay_steps,
-#                                        0.16, staircase=True)
-#        opt                 = tf.train.RMSPropOptimizer(learning_rate_op,
-#                                        decay=0.9, momentum=0.9, epsilon=1.0)
 
         loss1, loss2, \
             logits, labels = run_towers(is_training_ph,

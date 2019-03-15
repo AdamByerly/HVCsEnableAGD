@@ -1,11 +1,13 @@
 import numpy as np
 import tensorflow as tf
-from MNIST.model import make_tower
+#from simple.model import make_tower
+from inception_v3.model_hvc_1 import make_tower
 
 x = make_tower("tower1",
-    tf.zeros([64, 28, 28, 1]),    # input image size (and color channels)
-    tf.zeros([64, 10]),           # classes
-    True)
+    tf.zeros([96, 299, 299, 3]),    # input image size (and color channels)
+    tf.zeros([96, 1000]),           # classes
+    tf.constant(True),
+    1000)
 
 with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
 
