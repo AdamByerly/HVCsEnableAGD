@@ -633,10 +633,12 @@ def make_tower(tower_name, x_in, y_out, is_training, count_classes):
     return logits, preds, loss
 
 
-def run_towers(is_training, training_data, validation_data, count_classes):
+def run_towers(is_training, is_nbl,
+        training_data, validation_data, nbl_val_data, count_classes):
     with tf.device("/device:CPU:0"), tf.name_scope("input/train_or_eval"):
         images, labels = \
-            tf.cond(is_training, lambda: training_data, lambda: validation_data)
+            tf.cond(is_training, lambda: training_data, lambda:
+            tf.cond(is_nbl, lambda: nbl_val_data, lambda: validation_data))
         images_1, images_2 = tf.split(images, num_or_size_splits=2)
         labels_1, labels_2 = tf.split(labels, num_or_size_splits=2)
     with tf.device("/device:GPU:0"):

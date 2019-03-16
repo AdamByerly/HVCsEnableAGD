@@ -3,12 +3,67 @@ import tensorflow as tf
 from datetime import datetime
 from imagenet.output import Output
 from imagenet.input_sieve import DataSet, train_inputs, eval_inputs
+from imagenet.input_sieve import non_blacklisted_eval_inputs
 from inception_v3.model_hvc_1 import run_towers, apply_gradients
 from inception_v3.model_hvc_1 import compute_total_loss, evaluate_validation
 
-BATCH_SIZE   = 80
-IMAGE_HEIGHT = 299
-IMAGE_WIDTH  = 299
+def train(out, sess, epoch, training_steps, train_op, loss_op,
+        global_step, learning_rate, is_training_ph, validating_nbl_ph):
+    g_step = 0
+    for i in range(training_steps):
+        out.train_step_begin(i)
+
+        _, l, g_step, lr = sess.run(
+            [train_op, loss_op, global_step, learning_rate],
+            feed_dict={is_training_ph: True,
+                       validating_nbl_ph: False},
+            options=out.get_run_options(),
+            run_metadata=out.get_run_metadata())
+
+        out.train_step_end(
+            sess, epoch, g_step, i, l, lr, training_steps,
+            feed_dict={is_training_ph: True,
+                       validating_nbl_ph: False})
+
+    out.train_end(sess, epoch, g_step)
+
+
+def validate(out, sess, epoch, validation_steps,
+        loss_op, acc_top_1_op, acc_top_5_op, global_step,
+        learning_rate, is_training_ph, validating_nbl_ph):
+    g_step, acc_top1, acc_top5, test_loss, lr = (0, 0, 0, 0, 0)
+    for i in range(validation_steps):
+        out.validation_step_begin(i, validation_steps)
+
+        g_step, l, acc1, acc5, lr = sess.run(
+            [global_step, loss_op, acc_top_1_op, acc_top_5_op, learning_rate],
+            feed_dict={is_training_ph: False,
+                       validating_nbl_ph: False})
+        acc_top1 = (acc1 + (i * acc_top1)) / (i + 1)
+        acc_top5 = (acc5 + (i * acc_top5)) / (i + 1)
+        test_loss = (l + (i * test_loss)) / (i + 1)
+
+    out.validation_end(sess, epoch, g_step, False,
+                       test_loss, lr, acc_top1, acc_top5)
+
+
+def validate_nbl(out, sess, epoch, nbl_validation_steps,
+        loss_op, acc_top_1_op, acc_top_5_op, global_step,
+        learning_rate, is_training_ph, validating_nbl_ph):
+    g_step, acc_top1, acc_top5, test_loss, lr = (0, 0, 0, 0, 0)
+    for i in range(nbl_validation_steps):
+        out.validation_step_begin(i, nbl_validation_steps)
+
+        g_step, l, acc1, acc5, lr = sess.run(
+            [global_step, loss_op, acc_top_1_op, acc_top_5_op, learning_rate],
+            feed_dict={is_training_ph: False,
+                       validating_nbl_ph: True})
+        acc_top1 = (acc1 + (i * acc_top1)) / (i + 1)
+        acc_top5 = (acc5 + (i * acc_top5)) / (i + 1)
+        test_loss = (l + (i * test_loss)) / (i + 1)
+
+    out.validation_end(sess, epoch, g_step, True,
+                       test_loss, lr, acc_top1, acc_top5)
 
 
 def go(start_epoch, end_epoch, run_name, weights_file,
@@ -19,34 +74,52 @@ def go(start_epoch, end_epoch, run_name, weights_file,
     out = Output(run_name, profile_compute_time_every_n_steps,
                  save_summary_info_every_n_steps)
 
+    ############################################################################
+    # Data feeds
+    ############################################################################
     out.log_msg("Setting up data feeds...")
-    training_dataset   = DataSet('train', BATCH_SIZE)
-    validation_dataset = DataSet('validation', BATCH_SIZE)
-    training_data      = train_inputs(training_dataset, BATCH_SIZE,
-                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
-    validation_data    = eval_inputs(validation_dataset, BATCH_SIZE,
-                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
+    training_dataset   = DataSet('train')
+    validation_dataset = DataSet('validation')
+    nbl_val_dataset    = DataSet('non-blacklisted-validation')
+    training_data      = train_inputs(training_dataset, log_annotated_images)
+    validation_data    = eval_inputs(validation_dataset, log_annotated_images)
+    nbl_val_data       = non_blacklisted_eval_inputs(
+                            validation_dataset, log_annotated_images)
     training_steps     = training_dataset.num_batches_per_epoch()
     validation_steps   = validation_dataset.num_batches_per_epoch()
+    nbl_val_steps      = nbl_val_dataset.num_batches_per_epoch()
 
-    with tf.device("/device:CPU:0"):
-        global_step = tf.train.get_or_create_global_step()
+    ############################################################################
+    # Tensorflow placeholders and operations
+    ############################################################################
+    with tf.device("/device:CPU:0"):  # set the default device to the CPU
         with tf.name_scope("input/placeholders"):
-            keep_prob   = tf.placeholder(tf.float32)
-            is_training = tf.placeholder(tf.bool)
+            is_training_ph    = tf.placeholder(tf.bool)
+            validating_nbl_ph = tf.placeholder(tf.bool)
 
-    decay_steps = int(training_dataset.num_batches_per_epoch() * 30.0)
-    lr = tf.train.exponential_decay(0.1, global_step, decay_steps,
-                                    0.16, staircase=True)
-    opt = tf.train.RMSPropOptimizer(lr, decay=0.9, momentum=0.9, epsilon=1.0)
+        global_step        = tf.train.get_or_create_global_step()
+        decay_steps        = int(training_dataset.num_batches_per_epoch()*1.0)
+        learning_rate_op   = tf.train.exponential_decay(0.001,
+                                global_step, decay_steps, 0.96, staircase=True)
+        learning_rate_op   = tf.maximum(learning_rate_op, 1e-6)
+        opt                = tf.train.AdamOptimizer(
+                                learning_rate_op, epsilon=1.0)
 
-    loss1, loss2, logits, labels = run_towers(
-        is_training, training_data, validation_data, DataSet.num_classes())
-    train_op = apply_gradients(loss1, loss2, global_step, opt)
-    loss = compute_total_loss(loss1, loss2)
-    acc_top_1, acc_top_5 = evaluate_validation(logits, labels)
+        loss1, loss2, \
+            logits, labels = run_towers(is_training_ph,
+                                validating_nbl_ph, training_data,
+                                validation_data, nbl_val_data,
+                                DataSet.num_classes())
+        train_op           = apply_gradients(loss1, loss2, global_step, opt)
+        loss_op            = compute_total_loss(loss1, loss2)
+        acc_top_1_op, \
+            acc_top_5_op   = evaluate_validation(logits, labels)
 
     out.log_msg("Starting Session...")
+
+    ############################################################################
+    # Tensorflow session
+    ############################################################################
     with tf.Session(config=tf.ConfigProto(
             allow_soft_placement=True, log_device_placement=True)) as sess:
         out.set_session_graph(sess.graph)
@@ -59,46 +132,38 @@ def go(start_epoch, end_epoch, run_name, weights_file,
 
         tf.train.start_queue_runners(sess=sess)
 
-        for e in range(start_epoch, end_epoch+1):
-            for i in range(training_steps):
-                out.train_step_begin(i)
+        for e in range(start_epoch, end_epoch + 1):
+            train(out, sess, e, training_steps, train_op, loss_op,
+                  global_step, learning_rate_op,
+                  is_training_ph, validating_nbl_ph)
 
-                _, l, g_step = sess.run([train_op, loss, global_step],
-                    feed_dict={keep_prob: 0.8, is_training: True},
-                    options=out.get_run_options(),
-                    run_metadata=out.get_run_metadata())
+            validate(out, sess, e, validation_steps, loss_op, acc_top_1_op,
+                     acc_top_5_op, global_step, learning_rate_op,
+                     is_training_ph, validating_nbl_ph)
 
-                out.train_step_end(sess, g_step, e, i, l, training_steps,
-                    feed_dict={keep_prob: 0.8, is_training: True})
-
-            acc_top1, acc_top5, test_loss = (0, 0, 0)
-            for i in range(validation_steps):
-                out.validation_step_begin(i, validation_steps)
-
-                l, acc1, acc5 = sess.run([loss, acc_top_1, acc_top_5],
-                    feed_dict={keep_prob: 1, is_training: False})
-                acc_top1  = (acc1+(i*acc_top1))/(i+1)
-                acc_top5  = (acc5+(i*acc_top5))/(i+1)
-                test_loss = (l+(i*test_loss))/(i+1)
-
-            out.end_epoch(sess, e, global_step, test_loss, acc_top1, acc_top5)
+            validate_nbl(out, sess, e, nbl_val_steps, loss_op, acc_top_1_op,
+                        acc_top_5_op, global_step, learning_rate_op,
+                        is_training_ph, validating_nbl_ph)
 
     out.close_files()
 
 
+################################################################################
+# Entry point
+################################################################################
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="inception_v3_hvc_1")
+    parser = argparse.ArgumentParser(description="inception_v3")
     parser.add_argument("-se", "--start_epoch", default=1, type=int)
     parser.add_argument("-ee", "--end_epoch", default=100, type=int)
     parser.add_argument("-rn", "--run_name",
-        default=datetime.now().strftime("%Y%m%d%H%M%S"))
+                        default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)
     parser.add_argument("-pct", "--profile_compute_time_every_n_steps",
-        default=None, type=int)
+                        default=None, type=int)
     parser.add_argument("-ssi", "--save_summary_info_every_n_steps",
-        default=None, type=int)
+                        default=None, type=int)
     parser.add_argument("-lai", "--log_annotated_images",
-        default=False, type=bool)
+                        default=False, type=bool)
     args = parser.parse_args()
     print(args)
 
