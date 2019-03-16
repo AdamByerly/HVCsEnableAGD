@@ -7,6 +7,7 @@ from imagenet.input_sieve import non_blacklisted_eval_inputs
 from inception_v3.model_hvc_1 import run_towers, apply_gradients
 from inception_v3.model_hvc_1 import compute_total_loss, evaluate_validation
 
+
 def train(out, sess, epoch, training_steps, train_op, loss_op,
         global_step, learning_rate, is_training_ph, validating_nbl_ph):
     g_step = 0
