@@ -103,8 +103,7 @@ def go(start_epoch, end_epoch, run_name, weights_file,
         learning_rate_op   = tf.train.exponential_decay(0.001,
                                 global_step, decay_steps, 0.96, staircase=True)
         learning_rate_op   = tf.maximum(learning_rate_op, 1e-6)
-        opt                = tf.train.AdamOptimizer(
-                                learning_rate_op, epsilon=1.0)
+        opt                = tf.train.AdamOptimizer(learning_rate_op)
 
         loss1, loss2, \
             logits, labels = run_towers(is_training_ph,
