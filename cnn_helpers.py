@@ -264,3 +264,32 @@ def average_gradients(tower_grads):
         grad_and_var = (grad, v)
         average_grads.append(grad_and_var)
     return average_grads
+
+
+def apply_gradients(loss1, loss2, global_step, trainer):
+    with tf.device("/device:GPU:0"), tf.name_scope("tower1/compute_grads"):
+        grads1 = trainer.compute_gradients(loss1)
+    with tf.device("/device:GPU:1"), tf.name_scope("tower2/compute_grads"):
+        grads2 = trainer.compute_gradients(loss2)
+    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+    with tf.control_dependencies(update_ops):
+        with tf.device("/device:GPU:0"), tf.name_scope("merge_grads"):
+            grads   = average_gradients([grads1, grads2])
+        with tf.device("/device:CPU:0"), tf.name_scope("apply_grads"):
+            applied = trainer.apply_gradients(grads, global_step)
+    return applied
+
+
+def compute_total_loss(loss1, loss2):
+    with tf.device("/device:GPU:1"), tf.name_scope("loss"):
+        return tf.reduce_mean([loss1, loss2], 0)
+
+
+def evaluate_validation(logits, labels):
+    with tf.device("/device:GPU:1"), tf.name_scope("metrics"):
+        labels = tf.argmax(labels, 1)
+        in_top_1 = tf.nn.in_top_k(logits, labels, 1)
+        in_top_5 = tf.nn.in_top_k(logits, labels, 5)
+        acc_top_1 = tf.reduce_mean(tf.cast(in_top_1, tf.float32))
+        acc_top_5 = tf.reduce_mean(tf.cast(in_top_5, tf.float32))
+        return acc_top_1, acc_top_5

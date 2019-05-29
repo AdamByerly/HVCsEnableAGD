@@ -6,9 +6,8 @@ from cnn_helpers import make_conv_5x5_no_bias
 from cnn_helpers import make_conv_1x7_no_bias, make_conv_7x1_no_bias
 from cnn_helpers import make_avg_pool, make_avg_pool_3x3_stride_1
 from cnn_helpers import make_max_pool_3x3, make_avg_pool_5x5_stride_3
-from cnn_helpers import average_gradients, make_relu, make_concat
-from cnn_helpers import make_caps_from_conv, make_homogeneous_vector_caps
-from cnn_helpers import make_norm
+from cnn_helpers import make_relu, make_concat, make_caps_from_conv
+from cnn_helpers import make_homogeneous_vector_caps, make_norm
 from inception_v3.lsr_loss import lsr_loss
 from inception_v3.batch_norm import batch_norm
 
@@ -651,32 +650,3 @@ def run_towers(is_training, is_nbl,
             tf.name_scope("metrics/concat_tower_outputs"):
         logits     = tf.concat([logits1, logits2], 0)
     return loss1, loss2, logits, labels
-
-
-def apply_gradients(loss1, loss2, global_step, trainer):
-    with tf.device("/device:GPU:0"), tf.name_scope("tower1/compute_grads"):
-        grads1 = trainer.compute_gradients(loss1)
-    with tf.device("/device:GPU:1"), tf.name_scope("tower2/compute_grads"):
-        grads2 = trainer.compute_gradients(loss2)
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-        with tf.device("/device:GPU:0"), tf.name_scope("merge_grads"):
-            grads   = average_gradients([grads1, grads2])
-        with tf.device("/device:CPU:0"), tf.name_scope("apply_grads"):
-            applied = trainer.apply_gradients(grads, global_step)
-    return applied
-
-
-def compute_total_loss(loss1, loss2):
-    with tf.device("/device:GPU:1"), tf.name_scope("loss"):
-        return tf.reduce_mean([loss1, loss2], 0)
-
-
-def evaluate_validation(logits, labels):
-    with tf.device("/device:GPU:1"), tf.name_scope("metrics"):
-        labels = tf.argmax(labels, 1)
-        in_top_1 = tf.nn.in_top_k(logits, labels, 1)
-        in_top_5 = tf.nn.in_top_k(logits, labels, 5)
-        acc_top_1 = tf.reduce_mean(tf.cast(in_top_1, tf.float32))
-        acc_top_5 = tf.reduce_mean(tf.cast(in_top_5, tf.float32))
-        return acc_top_1, acc_top_5

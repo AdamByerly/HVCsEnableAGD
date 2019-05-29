@@ -1,10 +1,10 @@
 import argparse
 import tensorflow as tf
 from datetime import datetime
-from imagenet.output import Output
-from imagenet.input_sieve import DataSet, train_inputs, eval_inputs
-from simple.model import run_towers, apply_gradients
-from simple.model import compute_total_loss, evaluate_validation
+from cnn_helpers import apply_gradients, compute_total_loss, evaluate_validation
+from simple.output import Output
+from simple.input_sieve import DataSet, train_inputs, eval_inputs
+from simple.model import run_towers
 
 
 def train(out, sess, epoch, training_steps, train_op, loss_op,
@@ -35,7 +35,7 @@ def validate(out, sess, epoch, validation_steps,
 
         g_step, l, acc1, acc5 = sess.run(
             [global_step, loss_op, acc_top_1_op, acc_top_5_op],
-            feed_dict={is_training_ph: False, keep_prob_ph: 0.5})
+            feed_dict={is_training_ph: False, keep_prob_ph: 1})
         acc_top1 = (acc1 + (i * acc_top1)) / (i + 1)
         acc_top5 = (acc5 + (i * acc_top5)) / (i + 1)
         test_loss = (l + (i * test_loss)) / (i + 1)
@@ -119,10 +119,13 @@ def go(start_epoch, end_epoch, run_name, weights_file,
     out.close_files()
 
 
+################################################################################
+# Entry point
+################################################################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ImageNetNet")
     parser.add_argument("-se", "--start_epoch", default=1, type=int)
-    parser.add_argument("-ee", "--end_epoch", default=50, type=int)
+    parser.add_argument("-ee", "--end_epoch", default=175, type=int)
     parser.add_argument("-rn", "--run_name",
         default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)

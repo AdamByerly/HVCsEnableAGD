@@ -1,8 +1,6 @@
 import tensorflow as tf
-from cnn_helpers import make_fc
-from cnn_helpers import make_batch_norm, make_relu
-from cnn_helpers import make_dropout, average_gradients
-from cnn_helpers import make_max_pool_2x2, make_flatten
+from cnn_helpers import make_fc, make_batch_norm, make_relu
+from cnn_helpers import make_dropout, make_max_pool_2x2, make_flatten
 from cnn_helpers import make_conv_3x3_no_bias, make_conv_3x3_stride_2_no_bias
 
 
@@ -88,41 +86,4 @@ def run_towers(keep_prob, is_training,
     with tf.device("/device:GPU:1"),\
             tf.name_scope("metrics/concat_tower_outputs"):
         logits = tf.concat([logits1, logits2], 0)
-        # preds  = tf.concat([preds1, preds2], 0)
-        # tf.summary.histogram('predictions/activations', preds)
-        # tf.summary.scalar('predictions/sparsity', tf.nn.zero_fraction(preds))
-        # tf.summary.histogram('logits/activations', logits)
-        # tf.summary.scalar('logits/sparsity', tf.nn.zero_fraction(logits))
     return loss1, loss2, logits, labels
-
-
-def apply_gradients(loss1, loss2, global_step, trainer):
-    with tf.device("/device:GPU:0"), tf.name_scope("tower1/compute_grads"):
-        grads1 = trainer.compute_gradients(loss1)
-    with tf.device("/device:GPU:1"), tf.name_scope("tower2/compute_grads"):
-        grads2 = trainer.compute_gradients(loss2)
-    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-    with tf.control_dependencies(update_ops):
-        with tf.device("/device:GPU:0"), tf.name_scope("merge_grads"):
-            grads   = average_gradients([grads1, grads2])
-        with tf.device("/device:CPU:0"), tf.name_scope("apply_grads"):
-            applied = trainer.apply_gradients(grads, global_step)
-    # for grad, var in grads:
-    #     if grad is not None:
-    #         tf.summary.histogram(var.op.name + '/gradients', grad)
-    return applied
-
-
-def compute_total_loss(loss1, loss2):
-    with tf.device("/device:GPU:1"), tf.name_scope("loss"):
-        return tf.reduce_mean([loss1, loss2], 0)
-
-
-def evaluate_validation(logits, labels):
-    with tf.device("/device:GPU:1"), tf.name_scope("metrics"):
-        labels = tf.argmax(labels, 1)
-        in_top_1 = tf.nn.in_top_k(logits, labels, 1)
-        in_top_5 = tf.nn.in_top_k(logits, labels, 5)
-        acc_top_1 = tf.reduce_mean(tf.cast(in_top_1, tf.float32))
-        acc_top_5 = tf.reduce_mean(tf.cast(in_top_5, tf.float32))
-        return acc_top_1, acc_top_5

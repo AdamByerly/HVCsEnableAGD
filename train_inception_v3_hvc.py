@@ -1,11 +1,11 @@
 import argparse
 import tensorflow as tf
 from datetime import datetime
-from imagenet.output import Output
-from imagenet.input_sieve import DataSet, train_inputs, eval_inputs
-from imagenet.input_sieve import non_blacklisted_eval_inputs
-from inception_v3.model_hvc_1 import run_towers, apply_gradients
-from inception_v3.model_hvc_1 import compute_total_loss, evaluate_validation
+from cnn_helpers import apply_gradients, compute_total_loss, evaluate_validation
+from inception_v3.output import Output
+from inception_v3.input_sieve import DataSet, train_inputs, eval_inputs
+from inception_v3.input_sieve import non_blacklisted_eval_inputs
+from inception_v3.model_hvc import run_towers
 
 
 def train(out, sess, epoch, training_steps, train_op, loss_op,
@@ -130,20 +130,28 @@ def go(start_epoch, end_epoch, run_name, weights_file,
         else:
             tf.global_variables_initializer().run()
 
-        tf.train.start_queue_runners(sess=sess)
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
-        for e in range(start_epoch, end_epoch + 1):
-            train(out, sess, e, training_steps, train_op, loss_op,
-                  global_step, learning_rate_op,
-                  is_training_ph, validating_nbl_ph)
+        try:
+            for e in range(start_epoch, end_epoch + 1):
+                train(out, sess, e, training_steps, train_op, loss_op,
+                      global_step, learning_rate_op,
+                      is_training_ph, validating_nbl_ph)
 
-            validate(out, sess, e, validation_steps, loss_op, acc_top_1_op,
-                     acc_top_5_op, global_step, learning_rate_op,
-                     is_training_ph, validating_nbl_ph)
+                validate(out, sess, e, validation_steps, loss_op, acc_top_1_op,
+                         acc_top_5_op, global_step, learning_rate_op,
+                         is_training_ph, validating_nbl_ph)
 
-            validate_nbl(out, sess, e, nbl_val_steps, loss_op, acc_top_1_op,
-                        acc_top_5_op, global_step, learning_rate_op,
-                        is_training_ph, validating_nbl_ph)
+                validate_nbl(out, sess, e, nbl_val_steps, loss_op, acc_top_1_op,
+                            acc_top_5_op, global_step, learning_rate_op,
+                            is_training_ph, validating_nbl_ph)
+        except tf.errors.OutOfRangeError:
+            out.log_msg("Finished.")
+        finally:
+            coord.request_stop()
+        coord.join(threads)
+        sess.close()
 
     out.close_files()
 
@@ -154,7 +162,7 @@ def go(start_epoch, end_epoch, run_name, weights_file,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="inception_v3")
     parser.add_argument("-se", "--start_epoch", default=1, type=int)
-    parser.add_argument("-ee", "--end_epoch", default=100, type=int)
+    parser.add_argument("-ee", "--end_epoch", default=175, type=int)
     parser.add_argument("-rn", "--run_name",
                         default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)
