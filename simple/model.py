@@ -1,5 +1,5 @@
 import tensorflow as tf
-from cnn_helpers import make_fc, make_fc_no_bias
+from cnn_helpers import make_fc
 from cnn_helpers import make_batch_norm, make_relu
 from cnn_helpers import make_dropout, average_gradients
 from cnn_helpers import make_max_pool_2x2, make_flatten
@@ -58,10 +58,7 @@ def make_tower(tower_name, x_in, y_out, keep_prob, is_training, count_classes):
     relu11 = make_relu("relu11", cs, bn11)
     flat   = make_flatten("flatten", cs, relu11)
 
-    fc1      = make_fc_no_bias("fc1", fcs, flat, 4096)
-    bn_fc1   = make_batch_norm("bn_fc1", fcs, fc1, is_training)
-    relu_fc1 = make_relu("relu_fc1", fcs, bn_fc1)
-    do1      = make_dropout("do1", fcs, relu_fc1, keep_prob)
+    do1      = make_dropout("do1", fcs, flat, keep_prob)
     logits   = make_fc("fc2", fcs, do1, count_classes)
 
     for var in tf.trainable_variables():

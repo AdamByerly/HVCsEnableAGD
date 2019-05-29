@@ -1,11 +1,13 @@
 import numpy as np
 import tensorflow as tf
-#from simple.model import make_tower
-from inception_v3.model_hvc_1 import make_tower
+# from inception_v3.model_hvc_1 import make_tower # 24,452,528
+# from inception_v3.model import make_tower # 24,454,512
+# from simple.model import make_tower # 5,464,200
+from simple.model_hvc import make_tower # 5,463,216
 
 x = make_tower("tower1",
-    tf.zeros([96, 299, 299, 3]),    # input image size (and color channels)
-    tf.zeros([96, 1000]),           # classes
+    tf.zeros([1, 224, 224, 3]),    # input image size (and color channels)
+    tf.zeros([1, 1000]),           # classes
     tf.constant(True),
     1000)
 

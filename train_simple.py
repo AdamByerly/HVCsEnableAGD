@@ -6,13 +6,42 @@ from imagenet.input_sieve import DataSet, train_inputs, eval_inputs
 from simple.model import run_towers, apply_gradients
 from simple.model import compute_total_loss, evaluate_validation
 
-# TODO: figure out running out of memory after 700 steps
-#       when logging summary info for either gradients
-#       or predictions/logits (or both)
 
-BATCH_SIZE   = 128
-IMAGE_HEIGHT = 224
-IMAGE_WIDTH  = 224
+def train(out, sess, epoch, training_steps, train_op, loss_op,
+          global_step, is_training_ph, keep_prob_ph):
+    g_step = 0
+    for i in range(training_steps):
+        out.train_step_begin(i)
+
+        _, l, g_step = sess.run(
+            [train_op, loss_op, global_step],
+            feed_dict={is_training_ph: True, keep_prob_ph: 0.5},
+            options=out.get_run_options(),
+            run_metadata=out.get_run_metadata())
+
+        out.train_step_end(
+            sess, epoch, g_step, i, l, "DEFAULT", training_steps,
+            feed_dict={is_training_ph: True, keep_prob_ph: 0.5})
+
+    out.train_end(sess, epoch, g_step)
+
+
+def validate(out, sess, epoch, validation_steps,
+             loss_op, acc_top_1_op, acc_top_5_op, global_step,
+             is_training_ph, keep_prob_ph):
+    g_step, acc_top1, acc_top5, test_loss = (0, 0, 0, 0)
+    for i in range(validation_steps):
+        out.validation_step_begin(i, validation_steps)
+
+        g_step, l, acc1, acc5 = sess.run(
+            [global_step, loss_op, acc_top_1_op, acc_top_5_op],
+            feed_dict={is_training_ph: False, keep_prob_ph: 0.5})
+        acc_top1 = (acc1 + (i * acc_top1)) / (i + 1)
+        acc_top5 = (acc5 + (i * acc_top5)) / (i + 1)
+        test_loss = (l + (i * test_loss)) / (i + 1)
+
+    out.validation_end(sess, epoch, g_step, False,
+                       test_loss, "DEFAULT", acc_top1, acc_top5)
 
 
 def go(start_epoch, end_epoch, run_name, weights_file,
@@ -23,31 +52,42 @@ def go(start_epoch, end_epoch, run_name, weights_file,
     out = Output(run_name, profile_compute_time_every_n_steps,
                  save_summary_info_every_n_steps)
 
+    ############################################################################
+    # Data feeds
+    ############################################################################
     out.log_msg("Setting up data feeds...")
-    training_dataset   = DataSet('train', BATCH_SIZE)
-    validation_dataset = DataSet('validation', BATCH_SIZE)
-    training_data      = train_inputs(training_dataset, BATCH_SIZE,
-                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
-    validation_data    = eval_inputs(validation_dataset, BATCH_SIZE,
-                            IMAGE_HEIGHT, IMAGE_WIDTH, log_annotated_images)
+    training_dataset   = DataSet('train')
+    validation_dataset = DataSet('validation')
+    training_data      = train_inputs(training_dataset, log_annotated_images)
+    validation_data    = eval_inputs(validation_dataset, log_annotated_images)
     training_steps     = training_dataset.num_batches_per_epoch()
     validation_steps   = validation_dataset.num_batches_per_epoch()
 
-    with tf.device("/device:CPU:0"):
-        global_step = tf.train.get_or_create_global_step()
+    ############################################################################
+    # Tensorflow placeholders and operations
+    ############################################################################
+    with tf.device("/device:CPU:0"):  # set the default device to the CPU
         with tf.name_scope("input/placeholders"):
-            keep_prob   = tf.placeholder(tf.float32)
-            is_training = tf.placeholder(tf.bool)
+            is_training_ph     = tf.placeholder(tf.bool)
+            keep_prob_ph       = tf.placeholder(tf.float32)
 
-    opt = tf.train.AdamOptimizer()
+            global_step        = tf.train.get_or_create_global_step()
+            opt                = tf.train.AdamOptimizer()
 
-    loss1, loss2, logits, labels = run_towers(keep_prob,
-        is_training, training_data, validation_data, DataSet.num_classes())
-    train_op = apply_gradients(loss1, loss2, global_step, opt)
-    loss = compute_total_loss(loss1, loss2)
-    acc_top_1, acc_top_5 = evaluate_validation(logits, labels)
+            loss1, loss2, \
+                logits, labels = run_towers(keep_prob_ph, is_training_ph,
+                                    training_data, validation_data,
+                                    DataSet.num_classes())
+            train_op           = apply_gradients(loss1, loss2, global_step, opt)
+            loss_op            = compute_total_loss(loss1, loss2)
+            acc_top_1_op, \
+                acc_top_5_op   = evaluate_validation(logits, labels)
 
     out.log_msg("Starting Session...")
+
+    ############################################################################
+    # Tensorflow session
+    ############################################################################
     with tf.Session(config=tf.ConfigProto(
             allow_soft_placement=True, log_device_placement=True)) as sess:
         out.set_session_graph(sess.graph)
@@ -58,31 +98,23 @@ def go(start_epoch, end_epoch, run_name, weights_file,
         else:
             tf.global_variables_initializer().run()
 
-        tf.train.start_queue_runners(sess=sess)
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
-        for e in range(start_epoch, end_epoch+1):
-            for i in range(training_steps):
-                out.train_step_begin(i)
+        try:
+            for e in range(start_epoch, end_epoch + 1):
+                train(out, sess, e, training_steps, train_op, loss_op,
+                      global_step, is_training_ph, keep_prob_ph)
 
-                _, l, g_step = sess.run([train_op, loss, global_step],
-                    feed_dict={keep_prob: 0.5, is_training: True},
-                    options=out.get_run_options(),
-                    run_metadata=out.get_run_metadata())
-
-                out.train_step_end(sess, g_step, e, i, l, training_steps,
-                    feed_dict={keep_prob: 0.5, is_training: True})
-
-            acc_top1, acc_top5, test_loss = (0, 0, 0)
-            for i in range(validation_steps):
-                out.validation_step_begin(i, validation_steps)
-
-                l, acc1, acc5 = sess.run([loss, acc_top_1, acc_top_5],
-                    feed_dict={keep_prob: 1, is_training: False})
-                acc_top1  = (acc1+(i*acc_top1))/(i+1)
-                acc_top5  = (acc5+(i*acc_top5))/(i+1)
-                test_loss = (l+(i*test_loss))/(i+1)
-
-            out.end_epoch(sess, e, global_step, test_loss, acc_top1, acc_top5)
+                validate(out, sess, e, validation_steps, loss_op, acc_top_1_op,
+                         acc_top_5_op, global_step, is_training_ph,
+                         keep_prob_ph)
+        except tf.errors.OutOfRangeError:
+            out.log_msg("Finished.")
+        finally:
+            coord.request_stop()
+        coord.join(threads)
+        sess.close()
 
     out.close_files()
 
