@@ -1,9 +1,8 @@
 import argparse
 import tensorflow as tf
 from datetime import datetime
-from cnn_helpers import apply_gradients, compute_total_loss, evaluate_validation
+from input_sieve import DataSet, train_inputs, eval_inputs
 from simple.output import Output
-from simple.input_sieve import DataSet, train_inputs, eval_inputs
 from simple.model_hvc import run_towers
 
 
@@ -26,9 +25,8 @@ def train(out, sess, epoch, training_steps, train_op, loss_op,
     out.train_end(sess, epoch, g_step)
 
 
-def validate(out, sess, epoch, validation_steps,
-             loss_op, acc_top_1_op, acc_top_5_op, global_step,
-             is_training_ph):
+def validate(out, sess, epoch, validation_steps, loss_op,
+             acc_top_1_op, acc_top_5_op, global_step, is_training_ph):
     g_step, acc_top1, acc_top5, test_loss = (0, 0, 0, 0)
     for i in range(validation_steps):
         out.validation_step_begin(i, validation_steps)
@@ -40,13 +38,13 @@ def validate(out, sess, epoch, validation_steps,
         acc_top5 = (acc5 + (i * acc_top5)) / (i + 1)
         test_loss = (l + (i * test_loss)) / (i + 1)
 
-    out.validation_end(sess, epoch, g_step, False,
+    out.validation_end(sess, epoch, g_step,
                        test_loss, "DEFAULT", acc_top1, acc_top5)
 
 
 def go(start_epoch, end_epoch, run_name, weights_file,
        profile_compute_time_every_n_steps, save_summary_info_every_n_steps,
-       log_annotated_images):
+       log_annotated_images, image_size, batch_size, num_gpus, data_dir):
     tf.reset_default_graph()
 
     out = Output(run_name, profile_compute_time_every_n_steps,
@@ -56,39 +54,37 @@ def go(start_epoch, end_epoch, run_name, weights_file,
     # Data feeds
     ############################################################################
     out.log_msg("Setting up data feeds...")
-    training_dataset   = DataSet('train')
-    validation_dataset = DataSet('validation')
+    training_dataset   = DataSet('train', image_size, batch_size, num_gpus,
+                            data_dir, None)
+    validation_dataset = DataSet('validation', image_size, batch_size, num_gpus,
+                            data_dir, None)
     training_data      = train_inputs(training_dataset, log_annotated_images)
     validation_data    = eval_inputs(validation_dataset, log_annotated_images)
-    training_steps     = training_dataset.num_batches_per_epoch()
-    validation_steps   = validation_dataset.num_batches_per_epoch()
+    training_steps     = training_dataset.training_batches_per_epoch()
+    validation_steps   = validation_dataset.validation_batches_per_epoch()
 
     ############################################################################
     # Tensorflow placeholders and operations
     ############################################################################
     with tf.device("/device:CPU:0"):  # set the default device to the CPU
         with tf.name_scope("input/placeholders"):
-            is_training_ph     = tf.placeholder(tf.bool)
+            is_training_ph = tf.placeholder(tf.bool)
 
-            global_step        = tf.train.get_or_create_global_step()
-            opt                = tf.train.AdamOptimizer()
+        global_step        = tf.train.get_or_create_global_step()
+        opt                = tf.train.AdamOptimizer()
 
-            loss1, loss2, \
-                logits, labels = run_towers(is_training_ph,
-                                    training_data, validation_data,
-                                    DataSet.num_classes())
-            train_op           = apply_gradients(loss1, loss2, global_step, opt)
-            loss_op            = compute_total_loss(loss1, loss2)
+        train_op, loss_op,\
             acc_top_1_op, \
-                acc_top_5_op   = evaluate_validation(logits, labels)
+            acc_top_5_op   = run_towers(opt, global_step, is_training_ph,
+                                        training_data, validation_data,
+                                        DataSet.num_classes(), num_gpus)
 
     out.log_msg("Starting Session...")
 
     ############################################################################
     # Tensorflow session
     ############################################################################
-    with tf.Session(config=tf.ConfigProto(
-            allow_soft_placement=True, log_device_placement=True)) as sess:
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
         out.set_session_graph(sess.graph)
 
         if weights_file is not None:
@@ -121,9 +117,9 @@ def go(start_epoch, end_epoch, run_name, weights_file,
 # Entry point
 ################################################################################
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="ImageNetNet")
+    parser = argparse.ArgumentParser(description="simple_monolithic")
     parser.add_argument("-se", "--start_epoch", default=1, type=int)
-    parser.add_argument("-ee", "--end_epoch", default=175, type=int)
+    parser.add_argument("-ee", "--end_epoch", default=350, type=int)
     parser.add_argument("-rn", "--run_name",
         default=datetime.now().strftime("%Y%m%d%H%M%S"))
     parser.add_argument("-wf", "--weights_file", default=None)
@@ -133,9 +129,16 @@ if __name__ == "__main__":
         default=None, type=int)
     parser.add_argument("-lai", "--log_annotated_images",
         default=False, type=bool)
+    parser.add_argument("-is", "--image_size", default=224, type=int)
+    parser.add_argument("-bs", "--batch_size", default=128, type=int)
+    parser.add_argument("-g", "--gpus", default=2, type=int)
+    parser.add_argument("-dd", "--data_dir",
+        default="C:\\Users\\adam\\Downloads\\"
+                "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
     args = parser.parse_args()
     print(args)
 
     go(args.start_epoch, args.end_epoch, args.run_name, args.weights_file,
        args.profile_compute_time_every_n_steps,
-       args.save_summary_info_every_n_steps, args.log_annotated_images)
+       args.save_summary_info_every_n_steps, args.log_annotated_images,
+       args.image_size, args.batch_size, args.gpus, args.data_dir)

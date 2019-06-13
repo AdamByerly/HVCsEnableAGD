@@ -24,52 +24,45 @@ import math
 import numpy as np
 import tensorflow as tf
 
-BATCH_SIZE                = 128
-IMAGE_HEIGHT              = 224
-IMAGE_WIDTH               = 224
 PREPROCESS_THREADS        = 4
 READERS                   = 4
-INPUT_QUEUE_MEMORY_FACTOR = 32
+INPUT_QUEUE_MEMORY_FACTOR = 4  # 32
 EXAMPLES_PER_SHARD        = 1024
 CLASSES                   = 1000
 BACKGROUND_CLASSES        = 0
-TRAIN_IMAGE_COUNT         = 1281167
-VALIDATION_IMAGE_COUNT    = 50000
-BASE_DIR                  = "C:\\Users\\adam\\Downloads\\"
-DATA_DIR                  = os.path.join(BASE_DIR,
-                                "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
-BLACKLIST_FILE            = os.path.join(BASE_DIR,
-                                "ILSVRC2017_CLS-LOC\\"
-                                "ILSVRC2015_clsloc_validation_blacklist.txt")
+TRAIN_IMAGE_COUNT         = 20  # 1281167
+VALIDATION_IMAGE_COUNT    = 20  # 50000
 
 
 class DataSet(object):
-    def __init__(self, subset):
+    def __init__(self, subset, image_size, batch_size, num_gpus,
+                 data_dir, black_list_file):
         self.subset = subset
-        bl_file = open(BLACKLIST_FILE, "r")
-        self.bl_images = [int(line.strip()) for line in bl_file.readlines()]
-        self.bl_image_count = len(self.bl_images)
+        self.image_size = image_size
+        self.batch_size = batch_size
+        self.num_gpus = num_gpus
+        self.data_dir = data_dir
+        if black_list_file is not None:
+            bl_file = open(black_list_file, "r")
+            self.bl_images = [int(line.strip()) for line in bl_file.readlines()]
+            self.bl_image_count = len(self.bl_images)
 
     @staticmethod
     def num_classes():
         return CLASSES+BACKGROUND_CLASSES
 
-    def get_nbl_validation_image_list(self):
-        return self.bl_images
+    def training_batches_per_epoch(self):
+        return int(math.ceil(TRAIN_IMAGE_COUNT/self.batch_size))
 
-    def num_examples_per_epoch(self):
-        if self.subset == 'train':
-            return TRAIN_IMAGE_COUNT
-        if self.subset == 'validation':
-            return VALIDATION_IMAGE_COUNT
-        if self.subset == 'non-blacklisted-validation':
-            return VALIDATION_IMAGE_COUNT-self.bl_image_count
+    def validation_batches_per_epoch(self):
+        return int(math.ceil(VALIDATION_IMAGE_COUNT/self.batch_size))
 
-    def num_batches_per_epoch(self):
-        return int(math.ceil(self.num_examples_per_epoch()/BATCH_SIZE))
+    def nbl_validation_batches_per_epoch(self):
+        return int(math.ceil((VALIDATION_IMAGE_COUNT - self.bl_image_count)
+                             / self.batch_size))
 
     def data_files(self):
-        tf_record_pattern = os.path.join(DATA_DIR, '%s-*' % self.subset)
+        tf_record_pattern = os.path.join(self.data_dir, '%s-*' % self.subset)
         data_files = tf.gfile.Glob(tf_record_pattern)
         return data_files
 
@@ -104,11 +97,12 @@ def batch_inputs(dataset, log_annotated_images,
 
         if train:
             examples_queue = tf.RandomShuffleQueue(
-                capacity=min_queue_examples+3*BATCH_SIZE,
+                capacity=min_queue_examples+3*dataset.batch_size,
                 min_after_dequeue=min_queue_examples, dtypes=[tf.string])
         else:
             examples_queue = tf.FIFOQueue(
-                capacity=examples_per_shard+3*BATCH_SIZE, dtypes=[tf.string])
+                capacity=examples_per_shard+3*dataset.batch_size,
+                dtypes=[tf.string])
 
         if num_readers > 1:
             enqueue_ops = []
@@ -130,20 +124,21 @@ def batch_inputs(dataset, log_annotated_images,
                 parse_example_proto(example_serialized)
             if not filter_blacklist or \
                 filename != ["ILSVRC2012_val_"+("00000000"+str(bli))[:8]+".JPG"
-                            for bli in dataset.get_nbl_validation_image_list()]:
-                image = image_preprocessing(image_buffer, IMAGE_HEIGHT,
-                    IMAGE_WIDTH, bbox, label_index, text, synset,
+                            for bli in dataset.bl_images]:
+                image = image_preprocessing(image_buffer, dataset.image_size,
+                    dataset.image_size, bbox, label_index, text, synset,
                     log_annotated_images, train, thread_id)
                 images_and_labels.append([image, label_index, text, synset])
         images, labels, texts, synsets = tf.train.batch_join(
-            images_and_labels, batch_size=BATCH_SIZE,
-            capacity=2*num_preprocess_threads*BATCH_SIZE)
+            images_and_labels, batch_size=dataset.batch_size//dataset.num_gpus,
+            capacity=2*num_preprocess_threads*dataset.batch_size)
 
         images = tf.cast(images, tf.float32)
-        images = tf.reshape(images, shape=[BATCH_SIZE,
-            IMAGE_HEIGHT, IMAGE_WIDTH, 3])
+        images = tf.reshape(images, shape=[
+            dataset.batch_size//dataset.num_gpus,
+            dataset.image_size, dataset.image_size, 3])
 
-        labels = tf.reshape(labels, [BATCH_SIZE])
+        labels = tf.reshape(labels, [dataset.batch_size//dataset.num_gpus])
 
         return images, tf.one_hot(labels, dataset.num_classes())
 

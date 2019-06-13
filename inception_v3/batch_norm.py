@@ -22,58 +22,59 @@ import tensorflow as tf
 from tensorflow.python.training import moving_averages
 
 
-def batch_norm(scope, inputs, is_training=True, decay=0.9997, epsilon=0.001):
+def batch_norm(op_name, inputs, is_training, decay=0.9997, epsilon=0.001):
     """Adds a Batch Normalization layer.
     Args:
+        op_name: name for operation.
         inputs: a tensor of size [batch_size, height, width, channels]
                 or [batch_size, channels].
         decay: decay for the moving average.
         epsilon: small float added to variance to avoid dividing by zero.
         is_training: whether or not the model is in training mode.
-        scope: Optional scope for variable_scope.
     Returns:
         a tensor representing the output of the operation.
     """
     with tf.device("/device:CPU:0"),\
-            tf.variable_scope(scope, "batch_norm",
-                [inputs], reuse=tf.AUTO_REUSE):
+            tf.variable_scope("vars/bns", None, [inputs], reuse=tf.AUTO_REUSE):
         inputs_shape       = inputs.get_shape()
         axis               = list(range(len(inputs_shape) - 1))
         params_shape       = inputs_shape[-1:]
-        beta               = tf.get_variable("beta", shape=params_shape,
+        beta               = tf.get_variable(
+                                "beta_"+op_name, shape=params_shape,
                                 initializer=tf.zeros_initializer())
         moving_collections = [tf.GraphKeys.GLOBAL_VARIABLES,
                               tf.GraphKeys.MOVING_AVERAGE_VARIABLES]
-        moving_mean        = tf.get_variable("moving_mean", params_shape,
+        moving_mean        = tf.get_variable(
+                                "moving_mean_"+op_name, params_shape,
                                 initializer=tf.zeros_initializer(),
                                 trainable=False, collections=moving_collections)
-        moving_variance    = tf.get_variable("moving_variance", params_shape,
+        moving_variance    = tf.get_variable(
+                                "moving_variance_"+op_name, params_shape,
                                 initializer=tf.ones_initializer(),
                                 trainable=False, collections=moving_collections)
-    with tf.name_scope(scope):
-        def training_func():
-            # Calculate the moments based on the individual batch.
-            mean, variance         = tf.nn.moments(inputs, axis)
-            update_moving_mean     = moving_averages.assign_moving_average(
-                                        moving_mean, mean, decay)
-            update_moving_variance = moving_averages.assign_moving_average(
-                                        moving_variance, variance, decay)
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS,
-                                 update_moving_mean)
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS,
-                                 update_moving_variance)
-            return mean, variance
 
-        def inferring_func():
-            # Just use the moving_mean and moving_variance.
-            return moving_mean, moving_variance
+    def training_func():
+        # Calculate the moments based on the individual batch.
+        mean, variance      = tf.nn.moments(inputs, axis)
+        upd_moving_mean     = moving_averages.assign_moving_average(
+                                    moving_mean, mean, decay)
+        upd_moving_variance = moving_averages.assign_moving_average(
+                                    moving_variance, variance, decay)
+        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, upd_moving_mean)
+        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, upd_moving_variance)
+        return mean, variance
 
-        mean, variance = tf.cond(is_training,
-                            lambda: training_func(),
-                            lambda: inferring_func())
+    def inferring_func():
+        # Just use the moving_mean and moving_variance.
+        return moving_mean, moving_variance
+
+    with tf.name_scope(op_name):
+        mean_to_use, variance_to_use = tf.cond(is_training,
+                                        lambda: training_func(),
+                                        lambda: inferring_func())
 
         # Normalize the activations.
-        outputs = tf.nn.batch_normalization(inputs,
-                    mean, variance, beta, None, epsilon)
+        outputs = tf.nn.batch_normalization(inputs, mean_to_use,
+                    variance_to_use, beta, None, epsilon, name=op_name)
         outputs.set_shape(inputs.get_shape())
         return outputs

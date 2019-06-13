@@ -15,31 +15,19 @@ class Output:
         self.ssiens           = save_summary_info_every_n_steps
         model_file_base       = os.path.join("logs", run_name)
         self.model_file_base  = os.path.join(model_file_base, "weights")
-        train_csv_filename    = "{}_training_log.csv".format(run_name)
-        train_csv_filename    = os.path.join("logs", train_csv_filename)
         test_csv_filename     = "{}_test_log.csv".format(run_name)
         test_csv_filename     = os.path.join("logs", test_csv_filename)
         nbl_test_csv_filename = "{}_nbl_test_log.csv".format(run_name)
         nbl_test_csv_filename = os.path.join("logs", nbl_test_csv_filename)
 
-        self.train_csv              = self.open_csv(train_csv_filename)
         self.test_csv               = self.open_csv(test_csv_filename)
         self.nbl_test_csv           = self.open_csv(nbl_test_csv_filename)
-        no_accuracy                 = self.CSV_FIELDS.copy()
-        no_step                     = self.CSV_FIELDS.copy()
-        no_accuracy                 .remove("Top-1 Accuracy")
-        no_accuracy                 .remove("Top-5 Accuracy")
-        no_step                     .remove("Step")
-        self.train_csv_writer       = csv.DictWriter(self.train_csv,
-                                                     fieldnames=no_accuracy)
         self.test_csv_writer        = csv.DictWriter(self.test_csv,
-                                                     fieldnames=no_step)
+                                                     fieldnames=self.CSV_FIELDS)
         self.nbl_test_csv_writer    = csv.DictWriter(self.nbl_test_csv,
-                                                     fieldnames=no_step)
-        self.train_csv_writer       .writeheader()
+                                                     fieldnames=self.CSV_FIELDS)
         self.test_csv_writer        .writeheader()
         self.nbl_test_csv_writer    .writeheader()
-        self.train_csv              .flush()
         self.test_csv               .flush()
         self.nbl_test_csv           .flush()
         self.tb_writer              = None
@@ -77,7 +65,7 @@ class Output:
 
     def validation_step_begin(self, step, number_of_validation_steps):
         self.log_msg("Validating (step {}/{})...".
-                     format(step + 1, number_of_validation_steps + 1), True)
+                     format(step + 1, number_of_validation_steps), True)
 
     def validation_end(self, session, epoch, global_step, validate_nbl,
                        test_loss, lr, top1_accuracy, top5_accuracy):
@@ -108,7 +96,7 @@ class Output:
         prefix = "Test" if is_test else "Train"
         summary = tf.Summary()
         s_loss = summary.value.add()
-        s_loss.tag = "{}/Loss(Total)".format(prefix)
+        s_loss.tag = "{}/Loss".format(prefix)
         s_loss.simple_value = loss
         if is_test:
             s_accuracy1 = summary.value.add()
@@ -128,10 +116,9 @@ class Output:
             "Top-1 Accuracy": top1_accuracy,
             "Top-5 Accuracy": top5_accuracy,
             "Loss": loss,
-            "LR": lr })
+            "LR": lr})
 
         if is_test:
-            del row_dict["Step"]
             if validate_nbl:
                 self.tb_writer_nbl.add_summary(summary, epoch)
                 self.log_msg("[TEST-NBL] - Epoch {}".format(epoch))
@@ -144,11 +131,7 @@ class Output:
                 self.test_csv.flush()
         else:
             self.tb_writer.add_summary(summary, step_number)
-            self.log_msg("[TRAIN] - Epoch {}, Step {}".format(epoch, step))
-            del row_dict["Top-1 Accuracy"]
-            del row_dict["Top-5 Accuracy"]
-            self.train_csv_writer.writerow(row_dict)
-            self.train_csv.flush()
+            self.log_msg("[TRAIN] - Epoch {}, Step {}".format(epoch, step+1))
 
         self.log_msg("loss: {}".format(loss), False)
         if top1_accuracy is not None:
@@ -204,7 +187,6 @@ class Output:
         self.tf_saver_latest        = tf.train.Saver(max_to_keep=5)
 
     def close_files(self):
-        self.train_csv.close()
         self.test_csv.close()
         self.nbl_test_csv.close()
         self.tb_writer.close()
