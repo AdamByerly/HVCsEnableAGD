@@ -438,7 +438,7 @@ def make_tower(x_in, y_out, is_training, count_classes):
         pcap73 = make_caps_from_conv("pcap72",
                     caps_input, cap_dims, cap_count)
         ocap73 = make_homogeneous_vector_caps("outcaps73",
-                    pcap73, count_classes, cap_count, weight_decay=DECAY_RATE)
+                    pcap73, count_classes, cap_dims, weight_decay=DECAY_RATE)
         bn73b  = batch_norm("bn73b", ocap73, is_training)
         relu73b = make_relu("relu73b", bn73b)
 
@@ -595,10 +595,10 @@ def make_tower(x_in, y_out, is_training, count_classes):
         shape      = caps_input.get_shape().as_list()
         cap_count  = shape[1]*shape[2]*shape[3]//cap_dims
 
-        pcap99 = make_caps_from_conv("pcap72",
+        pcap99 = make_caps_from_conv("pcap99",
                     caps_input, cap_dims, cap_count)
-        ocap99 = make_homogeneous_vector_caps("outcaps73",
-                    pcap99, count_classes, cap_count, weight_decay=DECAY_RATE)
+        ocap99 = make_homogeneous_vector_caps("outcaps99",
+                    pcap99, count_classes, cap_dims, weight_decay=DECAY_RATE)
         bn99   = batch_norm("bn99", ocap99, is_training)
         relu99 = make_relu("relu99", bn99)
 
