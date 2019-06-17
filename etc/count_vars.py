@@ -1,27 +1,28 @@
 import numpy as np
 import tensorflow as tf
-# from inception_v3.model_hvc_1 import make_tower # 24,452,528
-# from inception_v3.model import make_tower # 24,454,512
-from simple.model import make_tower # 5,464,200
-# from simple.model_hvc import make_tower # 5,463,216
+from simple.model import make_tower as simple_make_tower
+from simple.model_hvc import make_tower as simple_hvc_make_tower
+from inception_v3.model import make_tower as inception_v3_make_tower
+from inception_v3.model_hvc import make_tower as inception_v3_hvc_make_tower
 
-x = make_tower("tower1",
-    tf.zeros([1, 224, 224, 3]),    # input image size (and color channels)
-    tf.zeros([1, 1000]),           # classes
-    tf.constant(0.5),
-    tf.constant(True),
-    1000)
 
-with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+def get_var_count(creator, image_size):
+    tf.reset_default_graph()
+    model = creator(tf.zeros([1, image_size, image_size, 3]),
+            tf.zeros([1, 1000]), tf.constant(True), 1000)
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=True)) as sess:
+        tf.global_variables_initializer().run()
+        _, variables = sess.run([model, tf.trainable_variables()])
+        var_count = np.array([(var == var).sum() for var in variables]).sum()
+        return var_count
 
-    tf.global_variables_initializer().run()
 
-    # variables_names = [v.name for v in tf.trainable_variables()]
-    # values = sess.run(variables_names)
-    # for k, v in zip(variables_names, values):
-    #     print( "Variable: ", k )
-    #     print( "Shape: ", v.shape )
+simple_var_count = get_var_count(simple_make_tower, 224)
+simple_hvc_var_count = get_var_count(simple_hvc_make_tower, 224)
+inceptionv3_var_count = get_var_count(inception_v3_make_tower, 299)
+inceptionv3_hvc_var_count = get_var_count(inception_v3_hvc_make_tower, 299)
 
-    _, variables = sess.run([x, tf.trainable_variables()])
-    var_count = np.array([(var == var).sum() for var in variables]).sum()
-    print("Total Variables: {:,}".format(var_count))
+print("Simple Var. Count ............:  {:,}".format(simple_var_count))
+print("Simple w/HVCs Var. Count......:  {:,}".format(simple_hvc_var_count))
+print("Inception v3 Var. Count.......: {:,}".format(inceptionv3_var_count))
+print("Inception v3 w/HVCs Var. Count: {:,}".format(inceptionv3_hvc_var_count))
