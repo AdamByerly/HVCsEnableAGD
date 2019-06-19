@@ -24,13 +24,16 @@ They all take the same parameters, which I hope makes it easier for you to use t
 --start_epoch
 --end_epoch
 --run_name
+--log_dir
 --weights_file
+--validate_all
+--validate_nbl
 --profile_compute_time_every_n_steps
 --log_annotated_images
 --save_summary_info_every_n_steps
 --image_size
 ```
-Further, all but the first 4 can safely ignored when initiating an experiment.  When resuming a preemptively halted experiment, you will also need to address `--start_epoch`, `--run_name`, and `--weights_file`.
+Further, all but the first 4 can safely be ignored when initiating an experiment.  When resuming a preemptively halted experiment, you will also need to address `--start_epoch`, `--run_name`, and `--weights_file`.
 See below for more information on each parameter.
 
 ## Parameters
@@ -43,7 +46,7 @@ See below for more information on each parameter.
 --black_list_file
 ``` 
  **Required** (sort of, and only for the Inception v3 experiments).
- Use this to specify the location of the ImageNet blacklist file.  See "Data Preparation" below to learn more about this file.  Technically, you don't have to specify this file, and the code will still work, but when validating the Inception v3 experiments, two validations are run.  One for all images in the validation set and a second for those that haven't been deemed as blacklisted.  If you don't provide the location of this file, it will perform two identical validations, neither of which will exclude any images in the validation set.  The simple monolithic CNN experiments do not perform a separate validation pass on the non-blacklisted subset of the validation data, so it is ignored for those experiments.
+ Use this to specify the location of the ImageNet blacklist file.  See "Data Preparation" below to learn more about this file.  Technically, you don't have to specify this file, and the code will still work, but when validating the Inception v3 experiments, two validations are run.  One for all images in the validation set and a second for those that haven't been deemed as blacklisted.  If you don't provide the location of this file, it will perform two identical validations, neither of which will exclude any images in the validation set.  The simple monolithic CNN experiments do not perform a separate validation pass on the non-blacklisted subset of the validation data, so it is ignored for those experiments.  See also `--validate_all` and `--validate_nbl`
 ```
 --gpus
 ```
@@ -53,7 +56,7 @@ If you have exactly two GPUs that you want to use, then this parameter can be om
 --batch_size
 ```
 **Required** (sort of).  Default Values: 96 (for Inception v3 experiments); 128 (for simple monolithic CNN experiments)
-The batch size you can use is limited by the memory available on your GPUs.  If you have 2 Geforce GTX 1080 TIs, which have 11GB of RAM each--like I did--, then you can omit this parameter.  If you have a different number of GPUs and/or a different amount of RAM on them, you will need to supply an appropriate value for this parameter.  In my experiments, I discovered that for the simple monolithic CNN, a batch size of ~5.82 per GB of GPU RAM per GPU is the threshold for the images and model to fit in memory.  For the Inception v3 experiments, a batch size of ~4.36 per GB of GPU RAM per GPU is the threshold for the images and model to fit in memory.  Note that the batch size must be evenly divisible by the number of GPUs being used.
+The batch size you can use is limited by the memory available on your GPUs.  If you have 2 GeForce GTX 1080 Tis, which have 11GB of RAM each--like I did--, then you can omit this parameter.  If you have a different number of GPUs and/or a different amount of RAM on them, you will need to supply an appropriate value for this parameter.  In my experiments, I discovered that for the simple monolithic CNN, a batch size of ~5.82 per GB of GPU RAM per GPU is the threshold for the images and model to fit in memory.  For the Inception v3 experiments, a batch size of ~4.36 per GB of GPU RAM per GPU is the threshold for the images and model to fit in memory.  Note that the batch size must be evenly divisible by the number of GPUs being used.
 ```
 --start_epoch
 ```
@@ -70,10 +73,25 @@ Model training will continue until this many epochs have run, or something else 
 Optional.  Default Value: an amalgamation of the digits taken from the current date and time.
 For example:  20181115153357.  This run was created on November 15, 2018 at 3:33:57 PM local time.  When resuming a previously halted experiment, you will want to provide the run name that was used for that experiment in this parameter.
 ```
+--log_dir
+```
+Optional.  Default Value: "logs"
+The default value is a relative path which will be a subdirectory to the working directory from which you run the command.
+```
 --weights_file
 ```
 Optional.  Default Value: None.
 In the event that you want to restart a previously interrupted training session, you'll need to provide the last saved weights as a starting point.  Note that when you provide a weights file, you'll also want to set the --start_epoch parameter to the next epoch following the epoch for which the weights were saved in the specified file.
+```
+--validate_all
+```
+Optional.  Default Value: True.
+Set to False to skip doing a validation pass after each epoch on the whole ImageNet validation set.  You will want either this, `--validate_nbl`, or both to be True.  This value is ignored for the simple monolithic CNN experiments. 
+```
+--validate_nbl
+```
+Optional.  Default Value: True.
+Set to False to skip doing a validation pass after each epoch on the the non-blacklisted subset of the ImageNet validation set.  You will want either this, `--validate_all`, or both to be True.  This value is ignored for the simple monolithic CNN experiments. 
 ```
 --profile_compute_time_every_n_steps
 ```
@@ -82,8 +100,8 @@ If you are using different GPUs or a different number of GPUs or are otherwise c
 ```
 --log_annotated_images
 ```
-Optional.  Default Value: False
-When true, a random subset of images that will be used for training are logged as summary images to be viewed in TensorBoard.  This can be used to give you insight into the preprocessing that is done on the images before they are trained on.  See `--save_summary_info_every_n_steps`.
+Optional.  Default Value: False.
+When True, a random subset of images that will be used for training are logged as summary images to be viewed in TensorBoard.  This can be used to give you insight into the preprocessing that is done on the images before they are trained on.  See `--save_summary_info_every_n_steps`.
 ```
 --save_summary_info_every_n_steps
 ```
@@ -105,12 +123,14 @@ Note: Results, including:
 - a summary of progress at each epoch in a CSV
 - TensorBoard related data and weights
 
-will be saved in a subdirectory to the working directory from which you run this command called `logs`.
+will be saved in the `--log_dir` directory.
 
 To view progress and the graph structure in TensorBoard, run the following command from the same working directory from which you launched the training script:
 ```
 tensorboard --logdir ./logs
 ```
+Once TensorBoard is running, direct your web browser to [http://localhost:6006](http://localhost:6006/).
+
 See more about TensorBoard here:  [https://www.tensorflow.org/guide/summaries_and_tensorboard](https://www.tensorflow.org/guide/summaries_and_tensorboard)
 
 # Data Preparation
