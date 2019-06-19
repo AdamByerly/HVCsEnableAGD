@@ -69,10 +69,10 @@ def validate_nbl(out, sess, epoch, nbl_validation_steps, loss_op,
 def go(start_epoch, end_epoch, run_name, weights_file,
        profile_compute_time_every_n_steps, save_summary_info_every_n_steps,
        log_annotated_images, image_size, batch_size, num_gpus,
-       data_dir, black_list_file):
+       data_dir, black_list_file, log_dir, do_validate_all, do_validate_nbl):
     tf.reset_default_graph()
 
-    out = Output(run_name, profile_compute_time_every_n_steps,
+    out = Output(log_dir, run_name, profile_compute_time_every_n_steps,
                  save_summary_info_every_n_steps)
 
     ############################################################################
@@ -131,13 +131,15 @@ def go(start_epoch, end_epoch, run_name, weights_file,
                 train(out, sess, e, training_steps, train_op, loss_op,
                       global_step, is_training_ph, is_validating_nbl_ph)
 
-                validate(out, sess, e, validation_steps, loss_op, acc_top_1_op,
-                         acc_top_5_op, global_step, is_training_ph,
-                         is_validating_nbl_ph)
+                if do_validate_all:
+                    validate(out, sess, e, validation_steps, loss_op,
+                             acc_top_1_op, acc_top_5_op, global_step,
+                             is_training_ph, is_validating_nbl_ph)
 
-                validate_nbl(out, sess, e, nbl_val_steps, loss_op, acc_top_1_op,
-                            acc_top_5_op, global_step, is_training_ph,
-                            is_validating_nbl_ph)
+                if do_validate_nbl:
+                    validate_nbl(out, sess, e, nbl_val_steps, loss_op,
+                                 acc_top_1_op, acc_top_5_op, global_step,
+                                 is_training_ph, is_validating_nbl_ph)
         except tf.errors.OutOfRangeError:
             out.log_msg("Finished.")
         finally:
@@ -167,12 +169,15 @@ if __name__ == "__main__":
     parser.add_argument("-is", "--image_size", default=299, type=int)
     parser.add_argument("-bs", "--batch_size", default=96, type=int)
     parser.add_argument("-g", "--gpus", default=2, type=int)
+    parser.add_argument("-ld", "--log_dir", default="logs")
     parser.add_argument("-dd", "--data_dir",
         default="C:\\Users\\adam\\Downloads\\"
                 "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
     parser.add_argument("-blf", "--black_list_file",
         default="C:\\Users\\adam\\Downloads\\ILSVRC2017_CLS-LOC\\"
                 "ILSVRC2015_clsloc_validation_blacklist.txt")
+    parser.add_argument("-vall", "--validate_all", default=True, type=bool)
+    parser.add_argument("-vnbl", "--validate_nbl", default=True, type=bool)
     args = parser.parse_args()
     print(args)
 
@@ -180,4 +185,5 @@ if __name__ == "__main__":
        args.profile_compute_time_every_n_steps,
        args.save_summary_info_every_n_steps, args.log_annotated_images,
        args.image_size, args.batch_size, args.gpus,
-       args.data_dir, args.black_list_file)
+       args.data_dir, args.black_list_file, args.log_dir,
+       args.validate_all, args.validate_nbl)

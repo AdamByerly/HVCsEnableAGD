@@ -44,10 +44,11 @@ def validate(out, sess, epoch, validation_steps, loss_op,
 
 def go(start_epoch, end_epoch, run_name, weights_file,
        profile_compute_time_every_n_steps, save_summary_info_every_n_steps,
-       log_annotated_images, image_size, batch_size, num_gpus, data_dir):
+       log_annotated_images, image_size, batch_size, num_gpus,
+       data_dir, log_dir):
     tf.reset_default_graph()
 
-    out = Output(run_name, profile_compute_time_every_n_steps,
+    out = Output(log_dir, run_name, profile_compute_time_every_n_steps,
                  save_summary_info_every_n_steps)
 
     ############################################################################
@@ -132,13 +133,17 @@ if __name__ == "__main__":
     parser.add_argument("-is", "--image_size", default=224, type=int)
     parser.add_argument("-bs", "--batch_size", default=128, type=int)
     parser.add_argument("-g", "--gpus", default=2, type=int)
+    parser.add_argument("-ld", "--log_dir", default="logs")
     parser.add_argument("-dd", "--data_dir",
         default="C:\\Users\\adam\\Downloads\\"
                 "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
+    parser.add_argument("-blf", "--black_list_file", default=None)
+    parser.add_argument("-vall", "--validate_all", default=True, type=bool)
+    parser.add_argument("-vnbl", "--validate_nbl", default=True, type=bool)
     args = parser.parse_args()
     print(args)
 
     go(args.start_epoch, args.end_epoch, args.run_name, args.weights_file,
        args.profile_compute_time_every_n_steps,
        args.save_summary_info_every_n_steps, args.log_annotated_images,
-       args.image_size, args.batch_size, args.gpus, args.data_dir)
+       args.image_size, args.batch_size, args.gpus, args.data_dir, args.log_dir)
