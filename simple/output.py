@@ -8,15 +8,20 @@ class Output:
     CSV_FIELDS = ["Date", "Time", "Epoch",
                   "Top-1 Accuracy", "Top-5 Accuracy", "Loss", "LR"]
 
-    def __init__(self, run_name, profile_compute_time_every_n_steps=None,
+    def __init__(self, log_dir, run_name,
+                 profile_compute_time_every_n_steps=None,
                  save_summary_info_every_n_steps=None):
         self.run_name         = run_name
         self.pctens           = profile_compute_time_every_n_steps
         self.ssiens           = save_summary_info_every_n_steps
-        model_file_base       = os.path.join("logs", run_name)
+        self.log_dir          = log_dir
+        model_file_base       = os.path.join(log_dir, run_name)
         self.model_file_base  = os.path.join(model_file_base, "weights")
         test_csv_filename     = "{}_test_log.csv".format(run_name)
-        test_csv_filename     = os.path.join("logs", test_csv_filename)
+        test_csv_filename     = os.path.join(log_dir, test_csv_filename)
+
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
 
         self.test_csv               = self.open_csv(test_csv_filename)
         self.test_csv_writer        = csv.DictWriter(self.test_csv,
@@ -139,7 +144,7 @@ class Output:
 
     def set_session_graph(self, session_graph):
         self.tb_writer = tf.summary.FileWriter(
-            os.path.join("logs", self.run_name), session_graph)
+            os.path.join(self.log_dir, self.run_name), session_graph)
         self.tf_saver_best_top1     = tf.train.Saver(max_to_keep=5)
         self.tf_saver_best_top5     = tf.train.Saver(max_to_keep=5)
         self.tf_saver_latest        = tf.train.Saver(max_to_keep=5)
