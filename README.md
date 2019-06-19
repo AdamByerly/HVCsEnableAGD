@@ -2,6 +2,11 @@
 
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: https://arxiv.org/...
 
+## Required Libraries
+-   TensorFlow (see  [http://www.tensorflow.org](http://www.tensorflow.org/) 
+-   NumPy (see  [http://www.numpy.org/](http://www.numpy.org/))
+-   OpenCV if using the `--log_annotated_images` parameter (see below and see [http://opencv.org/](http://opencv.org/))
+-   At least one GPU
 
 ## Reproducing the Results
 
@@ -140,3 +145,8 @@ See more about TensorBoard here:  [https://www.tensorflow.org/guide/summaries_an
 # A note on the excessive code duplication in this repository
 As a software engineer, it pains me to see the same code only slightly altered copied and pasted into multiple places.  However, as a researcher, I want to spend more time researching and less time refactoring and testing code that will not be used "in production", so to speak.  You will see very similar code in this repository duplicated 7 times in the files that have names beginning with "train_".  As well as very similar code in 4 files beginning with "model_" and in two files named "output.py".
 I have rationalized to myself that leaving this code duplication as it is will allow those who want to compare the different experiments or models to easily pull up the two files in their favorite diffing tool and be able to see exactly what is the same and what is different across any of the 7 experiments or any of the 4 models.
+
+&nbsp;
+&nbsp;
+
+Maintained by Adam Byerly (abyerly@fsmail.bradley.edu)
