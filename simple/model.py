@@ -78,6 +78,7 @@ def run_towers(optimizer, global_step, is_training,
     with tf.device("/device:CPU:0"), tf.name_scope("input/train_or_eval"):
         images, labels = \
             tf.cond(is_training, lambda: training_data, lambda: validation_data)
+    labels_list = []
     logits_list = []
     loss_list   = []
     grads       = []
@@ -89,9 +90,10 @@ def run_towers(optimizer, global_step, is_training,
                     images, labels, is_training, count_classes)
             logits_list.append(these_logits)
             loss_list.append(this_loss)
+            labels_list.append(labels)
             grads.append(optimizer.compute_gradients(this_loss))
 
     train_op, loss, acc_top_1, acc_top_5 = merge_towers_and_optimize(
-        optimizer, global_step, grads, logits_list, loss_list, labels)
+        optimizer, global_step, grads, logits_list, loss_list, labels_list)
 
     return train_op, loss, acc_top_1, acc_top_5
