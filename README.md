@@ -46,7 +46,7 @@ See below for more information on each parameter.
 --data_dir
 ``` 
  **Required**.
- Use this to specify the location of the processed ImageNet data files.  This should be a directory that contains 1024 training and 128 validation files, respectively.  The files will match the patterns `train-????-of-1024` and `validation-?????-of-00128`, respectively.  See "Data Preparation" below to learn how to create these files.
+ Use this to specify the location of the processed ImageNet data files.  This should be a directory that contains 1024 training and 128 validation files, respectively.  The files will match the patterns `train-????-of-1024` and `validation-?????-of-00128`, respectively.  See the [imagenet_prep_scripts subdirectory of this repository](https://github.com/AdamByerly/HVCsEnableAGD/tree/master/imagenet_prep_scripts) for more information regarding preparing the data to be used in training and validation.
 ```
 --black_list_file
 ``` 
@@ -138,12 +138,10 @@ Once TensorBoard is running, direct your web browser to [http://localhost:6006](
 
 See more about TensorBoard here:  [https://www.tensorflow.org/guide/summaries_and_tensorboard](https://www.tensorflow.org/guide/summaries_and_tensorboard)
 
-# Data Preparation
-
-...still working on this...
 
 # A note on the excessive code duplication in this repository
 As a software engineer, it pains me to see the same code only slightly altered copied and pasted into multiple places.  However, as a researcher, I want to spend more time researching and less time refactoring and testing code that will not be used "in production", so to speak.  You will see very similar code in this repository duplicated 7 times in the files that have names beginning with "train_".  As well as very similar code in 4 files beginning with "model_" and in two files named "output.py".
+
 I have rationalized to myself that leaving this code duplication as it is will allow those who want to compare the different experiments or models to easily pull up the two files in their favorite diffing tool and be able to see exactly what is the same and what is different across any of the 7 experiments or any of the 4 models.
 
 &nbsp;
