@@ -19,7 +19,6 @@
 #      /research/inception/inception/image_processing.py
 
 import os
-import cv2
 import math
 import numpy as np
 import tensorflow as tf
@@ -146,6 +145,7 @@ def batch_inputs(dataset, log_annotated_images,
 
 
 def annotate_images(imgs, labels, texts, synsets):
+    import cv2
     image_copy = np.copy(imgs)
     for i in range(image_copy.shape[0]):
         label = labels[i]
