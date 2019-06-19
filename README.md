@@ -3,7 +3,7 @@
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: https://arxiv.org/...
 
 ## Required Libraries
--   TensorFlow (see  [http://www.tensorflow.org](http://www.tensorflow.org/) 
+-   TensorFlow (see  [http://www.tensorflow.org](http://www.tensorflow.org/))
 -   NumPy (see  [http://www.numpy.org/](http://www.numpy.org/))
 -   OpenCV if using the `--log_annotated_images` parameter (see below and see [http://opencv.org/](http://opencv.org/))
 -   At least one GPU
