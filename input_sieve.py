@@ -26,12 +26,12 @@ import tensorflow as tf
 
 PREPROCESS_THREADS        = 4
 READERS                   = 4
-INPUT_QUEUE_MEMORY_FACTOR = 4  # 32
+INPUT_QUEUE_MEMORY_FACTOR = 32
 EXAMPLES_PER_SHARD        = 1024
 CLASSES                   = 1000
 BACKGROUND_CLASSES        = 0
-TRAIN_IMAGE_COUNT         = 20  # 1281167
-VALIDATION_IMAGE_COUNT    = 20  # 50000
+TRAIN_IMAGE_COUNT         = 1281167
+VALIDATION_IMAGE_COUNT    = 50000
 
 
 class DataSet(object):
@@ -42,6 +42,8 @@ class DataSet(object):
         self.batch_size = batch_size
         self.num_gpus = num_gpus
         self.data_dir = data_dir
+        self.bl_images = []
+        self.bl_image_count = 0
         if black_list_file is not None:
             bl_file = open(black_list_file, "r")
             self.bl_images = [int(line.strip()) for line in bl_file.readlines()]
