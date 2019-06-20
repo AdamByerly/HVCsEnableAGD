@@ -182,8 +182,7 @@ if __name__ == "__main__":
         default="C:\\Users\\adam\\Downloads\\"
                 "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
     parser.add_argument("-blf", "--black_list_file",
-        default="C:\\Users\\adam\\Downloads\\ILSVRC2017_CLS-LOC\\"
-                "ILSVRC2015_clsloc_validation_blacklist.txt")
+        default="ILSVRC2015_clsloc_validation_blacklist.txt")
     parser.add_argument("-vall", "--validate_all", default=True, type=bool)
     parser.add_argument("-vnbl", "--validate_nbl", default=True, type=bool)
     args = parser.parse_args()
