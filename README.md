@@ -1,3 +1,4 @@
+
 # Homogeneous Vector Capsules Enable Adaptive Gradient Descent in Convolutional Neural Networks
 
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: https://arxiv.org/...
@@ -23,14 +24,14 @@ We have provided 7 files, all named named with the prefix "train_" that correspo
 They all take the same parameters, which I hope makes it easier for you to use them:
 ```
 --data_dir
---black_list_file
 --gpus
 --batch_size
 --start_epoch
 --end_epoch
 --run_name
---log_dir
 --weights_file
+--black_list_file
+--log_dir
 --validate_all
 --validate_nbl
 --profile_compute_time_every_n_steps
@@ -38,7 +39,7 @@ They all take the same parameters, which I hope makes it easier for you to use t
 --save_summary_info_every_n_steps
 --image_size
 ```
-Further, all but the first 4 can safely be ignored when initiating an experiment.  When resuming a preemptively halted experiment, you will also need to address `--start_epoch`, `--run_name`, and `--weights_file`.
+Further, all but the first 3 can safely be ignored when initiating an experiment.  When resuming a preemptively halted experiment, you will also need to address `--start_epoch`, `--run_name`, and `--weights_file`.
 See below for more information on each parameter.
 
 ## Parameters
@@ -47,11 +48,6 @@ See below for more information on each parameter.
 ``` 
  **Required**.
  Use this to specify the location of the processed ImageNet data files.  This should be a directory that contains 1024 training and 128 validation files, respectively.  The files will match the patterns `train-????-of-1024` and `validation-?????-of-00128`, respectively.  See the [imagenet_prep_scripts subdirectory of this repository](https://github.com/AdamByerly/HVCsEnableAGD/tree/master/imagenet_prep_scripts) for more information regarding preparing the data to be used in training and validation.
-```
---black_list_file
-``` 
- **Required** (sort of, and only for the Inception v3 experiments).
- Use this to specify the location of the ImageNet blacklist file.  See "Data Preparation" below to learn more about this file.  Technically, you don't have to specify this file, and the code will still work, but when validating the Inception v3 experiments, two validations are run.  One for all images in the validation set and a second for those that haven't been deemed as blacklisted.  If you don't provide the location of this file, it will perform two identical validations, neither of which will exclude any images in the validation set.  The simple monolithic CNN experiments do not perform a separate validation pass on the non-blacklisted subset of the validation data, so it is ignored for those experiments.  See also `--validate_all` and `--validate_nbl`
 ```
 --gpus
 ```
@@ -78,15 +74,20 @@ Model training will continue until this many epochs have run, or something else 
 Optional.  Default Value: an amalgamation of the digits taken from the current date and time.
 For example:  20181115153357.  This run was created on November 15, 2018 at 3:33:57 PM local time.  When resuming a previously halted experiment, you will want to provide the run name that was used for that experiment in this parameter.
 ```
---log_dir
-```
-Optional.  Default Value: "logs"
-The default value is a relative path which will be a subdirectory to the working directory from which you run the command.
-```
 --weights_file
 ```
 Optional.  Default Value: None.
 In the event that you want to restart a previously interrupted training session, you'll need to provide the last saved weights as a starting point.  Note that when you provide a weights file, you'll also want to set the --start_epoch parameter to the next epoch following the epoch for which the weights were saved in the specified file.
+```
+--black_list_file
+``` 
+Optional.  Default Value: "ILSVRC2015_clsloc_validation_blacklist.txt"
+ Use this to specify the location of the ImageNet blacklist file.  This file is included in this repository in the same path as the "train_" scripts.  So, you can omit this parameter and, if the working directory for your command is the directory of the "train_" scripts, it will pick this file up and use it.  Technically, you could specify None for this parameter, and the code will still work, but when validating the Inception v3 experiments, two validations are run.  One for all images in the validation set and a second for those that haven't been deemed as blacklisted.  If you specify None for this parameter, it will perform two identical validations, neither of which will exclude any images in the validation set.  The simple monolithic CNN experiments do not perform a separate validation pass on the non-blacklisted subset of the validation data, so it is ignored for those experiments.  See also `--validate_all` and `--validate_nbl`
+```
+--log_dir
+```
+Optional.  Default Value: "logs"
+The default value is a relative path which will be a subdirectory to the working directory from which you run the command.
 ```
 --validate_all
 ```
@@ -120,7 +121,7 @@ Optional.  Default Value: 299 (for Inception v3 experiments); 224 (for simple mo
 ## Example command
 ```
 python train_simple_hvc.py \
-  --data_dir=C:\Users\adam\Downloads\ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed \
+  --data_dir=C:\Users\adam\Downloads\ILSVRC2017_CLS-LOC\Data\CLS-LOC\processed \
   --gpus=2 \
   --batch_size=128
 ```
