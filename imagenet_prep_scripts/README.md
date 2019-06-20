@@ -31,8 +31,7 @@ Your directory structure should look like this:
 ```
 Once you these .xml files are in place, you will want to execute the script named "gen_train_bboxes.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
 ```
-python gen_train_bboxes.py \
-  --base_working_dir=[base working directory]
+python gen_train_bboxes.py --base_working_dir=[base working directory]
 ```
 This process will create a file named "bboxes.csv" in the base working directory.  This process can take quite some time, depending on your hardware.
 
@@ -46,8 +45,7 @@ Rather than having all of these files in this one directory, it would be nice if
 
 Once you these images are in place, you will want to execute the script named "reorg_validation_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
 ```
-python reorg_validation_data.py \
-  --base_working_dir=[base working directory]  
+python reorg_validation_data.py --base_working_dir=[base working directory]  
 ```
 Note that this assumes you are executing the script with a working directory of the imagenet_prep_scripts folder from this repository.  Within that folder is a file named "imagenet_2012_validation_synset_labels.txt" that is needed by the script.  If you execute the script with a different working directory or have the "imagenet_2012_validation_synset_labels.txt" file in some other directory, you can specify it's location by passing it to the script in the `--validation_synset_labels_file` parameter.
 

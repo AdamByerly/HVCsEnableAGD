@@ -120,10 +120,7 @@ Optional.  Default Value: 299 (for Inception v3 experiments); 224 (for simple mo
 
 ## Example command
 ```
-python train_simple_hvc.py \
-  --data_dir=C:\Users\adam\Downloads\ILSVRC2017_CLS-LOC\Data\CLS-LOC\processed \
-  --gpus=2 \
-  --batch_size=128
+python train_simple_hvc.py --data_dir=C:\Users\adam\Downloads\ILSVRC2017_CLS-LOC\Data\CLS-LOC\processed --gpus=2 --batch_size=128
 ```
 Note: Results, including:
 - a summary of progress at each epoch in a CSV
