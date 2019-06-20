@@ -36,7 +36,7 @@ python gen_train_bboxes.py \
 ```
 This process will create a file named "bboxes.csv" in the base working directory.  This process can take quite some time, depending on your hardware.
 
-## Step 3: Reorganize the Validation Data
+## Step 3: Extracting and Reorganize the Validation Data
 First, you will need to extract the contents of the file you downloaded that is named "ILSVRC2012_img_val.tar" into a sub directory of the base working directory called "ILSVRC2012_img_val".
 Once that has been extracted into the subdirectory, you will find 50,000 validation images in the following directory:
 ```
@@ -51,5 +51,8 @@ python reorg_validation_data.py \
 ```
 Note that this assumes you are executing the script with a working directory of the imagenet_prep_scripts folder from this repository.  Within that folder is a file named "imagenet_2012_validation_synset_labels.txt" that is needed by the script.  If you execute the script with a different working directory or have the "imagenet_2012_validation_synset_labels.txt" file in some other directory, you can specify it's location by passing it to the script in the `--validation_synset_labels_file` parameter.
 
-## Step 4: Build TFRecord files
+## Step 4: Extract the Training Data
+...
+
+## Step 5: Build TFRecord files
 ...
