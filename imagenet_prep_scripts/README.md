@@ -15,7 +15,7 @@ Once logged in you will be able to download the training and validation images a
  6. Download: Training bounding box annotations (Task 1 & 2 only). 20MB.
      MD5: 9271167e2176350e65cfe4e546f14b17
 
-Move all 3 files into a base working directory of your choice.  All of the steps below will be relative to this base working directory.  And when examples show `[base working directory]`, replace that with the directory you chose.
+Download all 3 files into a base working directory of your choice.  All of the steps below will be relative to this base working directory.  And when examples show `[base working directory]`, replace that with the directory you chose.
 	
 ## Step 2: Create Bounding Boxes CSV
 First, you will need to extract the contents of the file you downloaded that is named "ILSVRC2012_bbox_train_v2.tar.gz" into a sub directory of the base working directory called "bboxes".
@@ -43,7 +43,7 @@ Once that has been extracted into the subdirectory, you will find 50,000 validat
 ```
 Rather than having all of these files in this one directory, it would be nice if they were moved into directories corresponding to their classes like the training data.
 
-Once you these images are in place, you will want to execute the script named "reorg_validation_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
+Once these images are in place, you will want to execute the script named "reorg_validation_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
 ```
 python reorg_validation_data.py --base_working_dir=[base working directory]  
 ```
