@@ -49,6 +49,16 @@ python reorg_validation_data.py --base_working_dir=[base working directory]
 ```
 Note that this assumes you are executing the script with a working directory of the imagenet_prep_scripts folder from this repository.  Within that folder is a file named "imagenet_2012_validation_synset_labels.txt" that is needed by the script.  If you execute the script with a different working directory or have the "imagenet_2012_validation_synset_labels.txt" file in some other directory, you can specify it's location by passing it to the script in the `--validation_synset_labels_file` parameter.
 
+Because all it needs to do is move 50,000 images into directories based on their classes, the script is relatively quick.  After executing your directory structure for the validation images should look like this:
+```
+[base working directory]\ILSVRC2012_img_val\n01440764\
+[base working directory]\ILSVRC2012_img_val\n01443537\
+[base working directory]\ILSVRC2012_img_val\n01484850\
+.
+.
+.
+```
+
 ## Step 4: Extract the Training Data
 ...
 
