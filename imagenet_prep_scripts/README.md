@@ -40,7 +40,7 @@ This process will create a file named "bboxes.csv" in the base working directory
 First, you will need to extract the contents of the file you downloaded that is named "ILSVRC2012_img_val.tar" into a sub directory of the base working directory called "ILSVRC2012_img_val".
 Once that has been extracted into the subdirectory, you will find 50,000 validation images in the following directory:
 ```
-[base working directory]\ILSVRC2012_img_val\Data\CLS-LOC\val\
+[base working directory]\ILSVRC2012_img_val\
 ```
 Rather than having all of these files in this one directory, it would be nice if they were moved into directories corresponding to their classes like the training data.
 
