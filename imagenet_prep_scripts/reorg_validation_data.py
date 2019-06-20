@@ -62,8 +62,7 @@ if __name__ == '__main__':
     default = "imagenet_2012_validation_synset_labels.txt")
   args = parser.parse_args()
 
-  data_dir = os.path.join(args.base_working_dir,
-                "ILSVRC2012_img_val\\Data\\CLS-LOC\\val")
+  data_dir = os.path.join(args.base_working_dir, "ILSVRC2012_img_val")
   validation_labels_file = args.validation_synset_labels_file
 
   # Read in the 50000 synsets associated with the validation data set.
