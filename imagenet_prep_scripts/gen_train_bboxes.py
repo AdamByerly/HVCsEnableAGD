@@ -168,10 +168,16 @@ def ProcessXMLAnnotation(xml_file):
   return boxes
 
 if __name__ == '__main__':
-  xml_dir = 'C:\\Users\\Adam\\Downloads\\ILSVRC2017_CLS-LOC\\Annotations\\CLS-LOC\\train'    
+  import argparse
+  parser = argparse.ArgumentParser(description="gen_train_bboxes")
+  parser.add_argument("-bd", "--base_working_dir")
+  args = parser.parse_args()
+  xml_dir = os.path.join(args.base_working_dir, 'bboxes')
+  out_file = os.path.join(args.base_working_dir, 'bboxes.csv')
+
   xml_files = glob.glob(xml_dir + '/*/*.xml')
   print('Identified %d XML files in %s' % (len(xml_files), xml_dir))
-  out_file = open("bboxes.csv", "w")
+  out_file = open(out_file, "w")
 
   skipped_boxes = 0
   skipped_files = 0

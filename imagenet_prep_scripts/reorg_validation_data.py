@@ -55,8 +55,16 @@ import sys
 
 
 if __name__ == '__main__':
-  data_dir = 'C:\\Users\\Adam\\Downloads\\ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\val'
-  validation_labels_file = 'C:\\Users\\Adam\\Downloads\\ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\imagenet_2012_validation_synset_labels.txt'
+  import argparse
+  parser = argparse.ArgumentParser(description="reorg_validation_data")
+  parser.add_argument("-bd", "--base_working_dir")
+  parser.add_argument("-vsl", "--validation_synset_labels_file",
+    default = "imagenet_2012_validation_synset_labels.txt")
+  args = parser.parse_args()
+
+  data_dir = os.path.join(args.base_working_dir,
+                "ILSVRC2012_img_val\\Data\\CLS-LOC\\val")
+  validation_labels_file = args.validation_synset_labels_file
 
   # Read in the 50000 synsets associated with the validation data set.
   labels = [l.strip() for l in open(validation_labels_file).readlines()]
