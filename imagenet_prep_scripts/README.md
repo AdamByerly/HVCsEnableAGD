@@ -60,7 +60,7 @@ Because all it needs to do is move 50,000 images into directories based on their
 ```
 
 ## Step 4: Extract the Training Data
-...
+I'm still working on this.  The delay is caused by my feeling that I need to reproduce these steps as I write them, and downloading 138GB is not quick here.
 
 ## Step 5: Build TFRecord files
-...
+If you are impatient, while waiting for me to update these instructions, check out "build_imagenet_data.py".  It shouldn't be too hard to figure out.
