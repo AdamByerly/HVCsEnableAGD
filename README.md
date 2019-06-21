@@ -1,7 +1,7 @@
 
 # Homogeneous Vector Capsules Enable Adaptive Gradient Descent in Convolutional Neural Networks
 
-This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: https://arxiv.org/...
+This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: http://arxiv.org/abs/1906.08676
 
 ## Required Libraries
 -   TensorFlow (see  [http://www.tensorflow.org](http://www.tensorflow.org/))
