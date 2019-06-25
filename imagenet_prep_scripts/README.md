@@ -1,4 +1,5 @@
 # Data Preparation
+The following instructions involve a .tar.gz file and many .tar files.  On Linux/Unix-based systems, you will have the ``tar`` command available to you to help with this.  On Windows-based systems, support for these file types is not built-in, so you will need an extraction tool.  I suggest 7-Zip (see: [https://www.7-zip.org/](https://www.7-zip.org/)).
 
 ## Step 1: Download Everything
 
@@ -29,7 +30,7 @@ Your directory structure should look like this:
 .
 .
 ```
-Once you these .xml files are in place, you will want to execute the script named "gen_train_bboxes.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
+Once these .xml files are in place, you will want to execute the script named "gen_train_bboxes.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
 ```
 python gen_train_bboxes.py --base_working_dir=[base working directory]
 ```
@@ -41,9 +42,7 @@ Once that has been extracted into the subdirectory, you will find 50,000 validat
 ```
 [base working directory]\ILSVRC2012_img_val\
 ```
-Rather than having all of these files in this one directory, it would be nice if they were moved into directories corresponding to their classes like the training data.
-
-Once these images are in place, you will want to execute the script named "reorg_validation_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
+Rather than having all of these files in this one directory, it would be nice if they were moved into directories corresponding to their classes like the training data.  So, once these images are in place, you will want to execute the script named "reorg_validation_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory:
 ```
 python reorg_validation_data.py --base_working_dir=[base working directory]  
 ```
@@ -60,7 +59,23 @@ Because all it needs to do is move 50,000 images into directories based on their
 ```
 
 ## Step 4: Extract the Training Data
-I'm still working on this.  The delay is caused by my feeling that I need to reproduce these steps as I write them, and downloading 138GB is not quick here.
+First, you will need to extract the contents of the file you downloaded that is named "ILSVRC2012_img_train.tar" into a sub directory of the base working directory called "ILSVRC2012_img_train".
+Once that has been extracted into the subdirectory, you will find 1,000 additional tar files (one for each class) in the following directory:
+```
+[base working directory]\ILSVRC2012_img_train\
+```
+This process can take quite some time, depending on your hardware.
+
+Now, each of those need to be extracted into separate directories named the same as each of the tar files (minue the .tar extension).  After doing so, your directory structure for the training images should look like this:
+```
+[base working directory]\ILSVRC2012_img_train\n01440764\
+[base working directory]\ILSVRC2012_img_train\n01443537\
+[base working directory]\ILSVRC2012_img_train\n01484850\
+.
+.
+.
+```
+This process can take quite some time, depending on your hardware.
 
 ## Step 5: Build TFRecord files
-If you are impatient, while waiting for me to update these instructions, check out "build_imagenet_data.py".  It shouldn't be too hard to figure out.
+I'm still working on this.  If you are impatient, while waiting for me to update these instructions, check out "build_imagenet_data.py".  It shouldn't be too hard to figure out.

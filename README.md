@@ -1,4 +1,3 @@
-
 # Homogeneous Vector Capsules Enable Adaptive Gradient Descent in Convolutional Neural Networks
 
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: http://arxiv.org/abs/1906.08676
@@ -120,7 +119,7 @@ Optional.  Default Value: 299 (for Inception v3 experiments); 224 (for simple mo
 
 ## Example command
 ```
-python train_simple_hvc.py --data_dir=C:\Users\adam\Downloads\ILSVRC2017_CLS-LOC\Data\CLS-LOC\processed --gpus=2 --batch_size=128
+python train_simple_hvc.py --data_dir=D:\workingbasedir\processed --gpus=2 --batch_size=128
 ```
 Note: Results, including:
 - a summary of progress at each epoch in a CSV
