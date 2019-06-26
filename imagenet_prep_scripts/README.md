@@ -78,4 +78,23 @@ Now, each of those need to be extracted into separate directories named the same
 This process can take quite some time, depending on your hardware.
 
 ## Step 5: Build TFRecord files
-I'm still working on this.  If you are impatient, while waiting for me to update these instructions, check out "build_imagenet_data.py".  It shouldn't be too hard to figure out.
+The goal of this step is to convert the training and evaluation images into  
+a sharded data set consisting of 1024 and 128 TFRecord files, respectively.  It is these files that are used during training (and validation) and not the actual/original image files.
+In order to do this, you will want to execute the script named "build_imagenet_data.py" in the imagenet_prep_scripts folder from this repository, specifying the base working directory
+```
+python build_imagenet_data.py --base_working_dir=[base working directory]  
+```
+Note that this assumes you are executing the script with a working directory of the imagenet_prep_scripts folder from this repository. 
+- Within that folder is a file named "imagenet_lsvrc_2015_synsets.txt" that is needed by the script.  If you execute the script with a different working directory or have the "imagenet_lsvrc_2015_synsets.txt" file in some other directory, you can specify its location by passing it to the script in the `--labels_file` parameter.
+- Within that folder is a file named "imagenet_metadata.txt" that is needed by the script.  If you execute the script with a different working directory or have the "imagenet_metadata.txt" file in some other directory, you can specify its location by passing it to the script in the `--imagenet_metadata_file` parameter.
+
+Also note that by default there are 8 threads designated to do this work.  You can override this with the `--num_threads` parameter.
+
+This script may take several hours or more, depending on your hardware.
+
+After this has finished, you will use the following directory for the `--data_dir` parameter used by each of the training scripts in the root folder of this repository.
+```
+[base working directory]\processed\
+```
+
+After it is finished, if you are running low on disk space, only the TFRecord files in the "processed" directory are needed, so you can consider deleting the bounding box files, the .tar files and images that were used to create the TFRecord files.

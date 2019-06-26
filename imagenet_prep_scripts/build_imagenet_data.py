@@ -96,14 +96,18 @@ import numpy as np
 import six
 import tensorflow as tf
 
+tf.app.flags.DEFINE_string('base_working_dir',
+                           None,
+                           'Training data directory')
+
 tf.app.flags.DEFINE_string('train_directory',
-                           '.\\Data\\CLS-LOC\\train',
+                           'ILSVRC2012_img_train',
                            'Training data directory')
 tf.app.flags.DEFINE_string('validation_directory',
-                           '.\\Data\\CLS-LOC\\val',
+                           'ILSVRC2012_img_val',
                            'Validation data directory')
 tf.app.flags.DEFINE_string('output_directory',
-                           '.\\Data\\CLS-LOC\\processed',
+                           'processed',
                            'Output data directory')
 
 tf.app.flags.DEFINE_integer('train_shards', 1024,
@@ -152,7 +156,7 @@ tf.app.flags.DEFINE_string('imagenet_metadata_file',
 # Note that there might exist mulitple bounding box annotations associated
 # with an image file.
 tf.app.flags.DEFINE_string('bounding_box_file',
-                           '.\\Annotations\\CLS-LOC\\bboxes.csv',
+                           'bboxes.csv',
                            'Bounding box file')
 
 FLAGS = tf.app.flags.FLAGS
@@ -379,7 +383,8 @@ def _process_image_files_batch(coder, thread_index, ranges, name, filenames,
     # Generate a sharded version of the file name, e.g. 'train-00002-of-00010'
     shard = thread_index * num_shards_per_batch + s
     output_filename = '%s-%.5d-of-%.5d' % (name, shard, num_shards)
-    output_file = os.path.join(FLAGS.output_directory, output_filename)
+    output_dir = os.path.join(FLAGS.base_working_dir, FLAGS.output_directory)
+    output_file = os.path.join(output_dir, output_filename)
     writer = tf.python_io.TFRecordWriter(output_file)
 
     shard_counter = 0
@@ -687,21 +692,26 @@ def _build_bounding_box_lookup(bounding_box_file):
 
 
 def main(unused_argv):
+  output_dir = os.path.join(FLAGS.base_working_dir, FLAGS.output_directory)
+  train_dir =  os.path.join(FLAGS.base_working_dir, FLAGS.train_directory)
+  val_dir = os.path.join(FLAGS.base_working_dir, FLAGS.validation_directory)
+  bb_file = os.path.join(FLAGS.base_working_dir, FLAGS.bounding_box_file)
+
   assert not FLAGS.train_shards % FLAGS.num_threads, (
       'Please make the FLAGS.num_threads commensurate with FLAGS.train_shards')
   assert not FLAGS.validation_shards % FLAGS.num_threads, (
       'Please make the FLAGS.num_threads commensurate with '
       'FLAGS.validation_shards')
-  print('Saving results to %s' % FLAGS.output_directory)
+  print('Saving results to %s' % output_dir)
 
   # Build a map from synset to human-readable label.
   synset_to_human = _build_synset_lookup(FLAGS.imagenet_metadata_file)
-  image_to_bboxes = _build_bounding_box_lookup(FLAGS.bounding_box_file)
+  image_to_bboxes = _build_bounding_box_lookup(bb_file)
 
   # Run it!
-  _process_dataset('validation', FLAGS.validation_directory,
+  _process_dataset('validation', val_dir,
                    FLAGS.validation_shards, synset_to_human, image_to_bboxes)
-  _process_dataset('train', FLAGS.train_directory, FLAGS.train_shards,
+  _process_dataset('train', train_dir, FLAGS.train_shards,
                    synset_to_human, image_to_bboxes)
 
 
