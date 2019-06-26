@@ -697,6 +697,9 @@ def main(unused_argv):
   val_dir = os.path.join(FLAGS.base_working_dir, FLAGS.validation_directory)
   bb_file = os.path.join(FLAGS.base_working_dir, FLAGS.bounding_box_file)
 
+  if not os.path.exists(output_dir):
+      os.makedirs(output_dir)
+
   assert not FLAGS.train_shards % FLAGS.num_threads, (
       'Please make the FLAGS.num_threads commensurate with FLAGS.train_shards')
   assert not FLAGS.validation_shards % FLAGS.num_threads, (
