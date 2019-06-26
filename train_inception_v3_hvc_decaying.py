@@ -178,8 +178,7 @@ if __name__ == "__main__":
     parser.add_argument("-g", "--gpus", default=2, type=int)
     parser.add_argument("-ld", "--log_dir", default="logs")
     parser.add_argument("-dd", "--data_dir",
-        default="C:\\Users\\adam\\Downloads\\"
-                "ILSVRC2017_CLS-LOC\\Data\\CLS-LOC\\processed")
+        default="D:\\workingbasedir\\processed")
     parser.add_argument("-blf", "--black_list_file",
         default="ILSVRC2015_clsloc_validation_blacklist.txt")
     parser.add_argument("-vall", "--validate_all", default=True, type=bool)
