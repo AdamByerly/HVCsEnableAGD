@@ -13,6 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+#
+# The above copyright notice is applied in accordance with the license
+#  of the codebase from which the following was derived and retrieved from:
+#    https://github.com/tensorflow/models/blob/master
+#      /research/inception/inception/data/preprocess_imagenet_validation_data.py
+
 """Process the ImageNet Challenge bounding boxes for TensorFlow model training.
 
 Associate the ImageNet 2012 Challenge validation data set with labels.

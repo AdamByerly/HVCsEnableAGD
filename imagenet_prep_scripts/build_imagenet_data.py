@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+#
+# The above copyright notice is applied in accordance with the license
+#  of the codebase from which the following was derived and retrieved from:
+#    https://github.com/tensorflow/models/blob/master
+#      /research/inception/inception/data/build_imagenet_data.py
+
 """Converts ImageNet data to TFRecords file format with Example protos.
 
 The raw ImageNet data set is expected to reside in JPEG files located in the
