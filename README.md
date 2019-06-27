@@ -1,4 +1,4 @@
-# Homogeneous Vector Capsules Enable Adaptive Gradient Descent in Convolutional Neural Networks
+# Homogeneous Vector Capsules Enable Adaptive Gradient Descent in Convolutional Neural Networks [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3258381.svg)](https://doi.org/10.5281/zenodo.3258381)
 
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: http://arxiv.org/abs/1906.08676
 
