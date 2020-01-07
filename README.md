@@ -3,7 +3,7 @@
 ![license Apache 2](https://img.shields.io/static/v1?label=license&message=Apache%202&color=blue "license Apache 2")
 ![version v1.0.1](https://img.shields.io/static/v1?label=version&message=v1.0.1&color=orange "version v1.0.1")
 ![codefactor A](https://www.codefactor.io/Content/badges/A.svg "codefactor A")
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3258381.svg)](https://doi.org/10.5281/zenodo.3258381)
+[![DOI](https://zenodo.org//badge/DOI/10.5281/zenodo.3258380.svg)](https://doi.org/10.5281/zenodo.3258380)
 
 This repository contains the code used for the experiments detailed in a paper currently submitted to IEEE Transactions on Neural Networks and Learning Systems.  The paper is available pre-published at arXiv: http://arxiv.org/abs/1906.08676
 
